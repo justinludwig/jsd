@@ -43,6 +43,7 @@ function testParseSimple() {
     JSD.assert(JSD.equals([], new JSD().parse("/* nada */ foo // bar \n /* * */ baz /* nix */")), "test parse no javadoc");
     JSD.assert(JSD.equals([new JSD.Tag("file", "foo.js", "My file."), new JSD.Tag("function", "foo", "My fn.", ["x", "y", "z.z-z"]), new JSD.Tag("param", "o", "My param."), new JSD.Tag("var", "v", "My var.")], new JSD().parse("/** @file foo.js My file. */ /** My fn. @function {x y z.z-z} foo @param o My param. */ function foo(o) {} /** @var v My var. */ var v;")), "test parse simple");
     JSD.assert(JSD.equals([new JSD.Tag("function", "foo", "My foo.")], new JSD().parse("/***\n *** @function foo\n *** My foo.\n ***/")), "test parse extra asterixes");
+    JSD.assert(JSD.equals([new JSD.Tag("function", "foo", "My {@link Foo} for {@link Bar}.")], new JSD().parse("/** @function foo My {@link Foo} for {@link Bar}. */")), "test parse with inner tags");
 }
 TestParse.add("testParseSimple", testParseSimple);
 

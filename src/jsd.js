@@ -98,6 +98,22 @@ JSD.dump = function(o, tabs) {
 }
 
 /**
+ * @function {static string[string]} mapArgs
+ * Maps dash cmd-line args (ie --foo) to their values.
+ * For example maps ["-f", "x", "-bar", "--foo", "y"]
+ * to { f: "x", bar: "", foo: "y" }.
+ * @param {string[]} a Arguments array.
+ * @return Map of arguments.
+ */
+JSD.mapArgs = function(a) {
+    var m = {};
+    for (var i = 0; i < a.length; i++)
+        if (/^-+/.test(a[i]))
+            m[a[i].replace(/^-+/, "")] = (!/^-+/.test(a[i+r1i]) ? a[i+1] : "");
+    return m;
+}
+
+/**
  * @function {static string} trim
  * Trims the leading and trailing whitespace from a string.
  * @param {string} s String to trim.
@@ -182,8 +198,20 @@ JSD.prototype.parse = function(s) {
     return this.tags;
 }
 
+// parse special inner tags (ie {@link Foo})
+JSD.prototype.parseInnerComment = function(s) {
+    for (var re = /\{@([^\s}]+)\s*([^\s}]*)([^}]*)}/g, a; a = re.exec(s);) {
+        var name = a[1];
+        var value = a[2];
+        var text = JSD.trim(a[3]);
+    }
+}
+
 JSD.prototype.parseComment = function(s) {
     s = s || "";
+
+    // temporarily remove inner tags (ie {@link Foo})
+    s = s.replace(/\{@/g, "{#");
 
     for (var re = /([^\@]+?\s)?@([^\s@]+)\s*(?:\{([^\}]*)\}\s*)?([^\s@]*)([^@]*)/g, a; a = re.exec(s);) {
         var text0 = JSD.trim(a[1]);
@@ -200,6 +228,7 @@ JSD.prototype.parseComment = function(s) {
             else
                 text = text1;
         }
+        text = text.replace(/\{#/g, "{@");
 
         this.tags.push(new JSD.Tag(name, value, text, modifiers ? modifiers.split(/\s+/) : []));
     }
