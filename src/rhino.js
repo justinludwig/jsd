@@ -2,16 +2,17 @@
  * @file rhino.js Rhino-specific javascript.
  */
 
+load("src/utl.js");
 load("src/jsd.js");
 
-JSD.readDirectory = function(file, filter, charset) {
+Utl.readDirectory = function(file, filter, charset) {
     if (!file.exists()) return "";
 
     if (file.isDirectory()) {
         var a = [];
         var files = filter ? file.listFiles(filter) : file.listFiles();
         for (var i = 0; i < files.length; i++)
-            a.push(JSD.readDirectory(files[i], filter, charset));
+            a.push(Utl.readDirectory(files[i], filter, charset));
         return a.join("");
     }
 
@@ -31,7 +32,7 @@ print("running...");
     });
     for (var i = 0; i < files.length; i++) {
         var file = new java.io.File(files[i]);
-        a.push(JSD.readDirectory(file, filter));
+        a.push(Utl.readDirectory(file, filter));
     }
     print(new JSD().run(a.join("")));
 })(arguments);
