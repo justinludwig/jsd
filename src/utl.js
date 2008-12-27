@@ -8,22 +8,27 @@
 var Utl = {
 
 /**
- * @function {static} log
- * Logs a message at the optional level for the optional category.
- * @param {string} msg Message to log.
- * @param {optional string} level Level at which to log (ie "DEBUG" etc).
- * @param {optional string} cat Category for which to log.
+ * @function {string} trim
+ * Trims the leading and trailing whitespace from a string.
+ * @param {string} s String to trim.
+ * @return Trimmed string.
  */
-log: function(msg, level, cat) {
-    var s = (cat ? cat + ": " : "") + (level ? "(" + level + ") " : "") + String(msg);
-    if (typeof print != "undefined")
-        print(s);
-    else if (typeof alert != "undefined")
-        alert(s);
+trim: function(s) {
+    return (s ? s.replace(/^\s+|\s+$/g, "") : "");
 },
 
 /**
- * @function {static boolean} equals
+ * @function {string} escapeJS
+ * Escapes javascript string content.
+ * @param {string} s String to escape.
+ * @return Escaped string.
+ */
+escapeJS: function(s) {
+    return s.replace(/([\\'"])/g, "\\$1").replace(/\n/g, "\\n").replace(/\r/g, "\\r");
+},
+
+/**
+ * @function {boolean} equals
  * Returns true if two objects are equal.
  * @param x First object.
  * @param y Second object.
@@ -62,7 +67,22 @@ equals: function(x, y) {
 },
 
 /**
- * @function {static string} dump
+ * @function log
+ * Logs a message at the optional level for the optional category.
+ * @param {string} msg Message to log.
+ * @param {optional string} level Level at which to log (ie "DEBUG" etc).
+ * @param {optional string} cat Category for which to log.
+ */
+log: function(msg, level, cat) {
+    var s = (cat ? cat + ": " : "") + (level ? "(" + level + ") " : "") + String(msg);
+    if (typeof print != "undefined")
+        print(s);
+    else if (typeof alert != "undefined")
+        alert(s);
+},
+
+/**
+ * @function {string} dump
  * Dumps out specified object.
  * @param o Object to dump.
  * @param {int} tabs Tab depth.
@@ -95,7 +115,35 @@ dump: function(o, tabs) {
 },
 
 /**
- * @function {static string[string]} mapArgs
+ * @function {string[]} propertyNames
+ * Returns array of the property names for object o.
+ * @param o Object for which to list property names.
+ * @return Array of property names.
+ */
+propertyNames: function(o) {
+    var a = [];
+    if (o)
+        for (var i in o)
+            a.push(i);
+    return a;
+},
+
+/**
+ * @function {object[]} propertyValues
+ * Returns array of the property values for object o.
+ * @param o Object for which to list property values.
+ * @return Array of property values.
+ */
+propertyValues: function(o) {
+    var a = [];
+    if (o)
+        for (var i in o)
+            a.push(o[i]);
+    return a;
+},
+
+/**
+ * @function {string[string]} mapArgs
  * Maps dash cmd-line args (ie --foo) to their values.
  * For example maps ["-f", "x", "-bar", "--foo", "y"]
  * to { f: "x", bar: "", foo: "y" }.
@@ -111,17 +159,7 @@ mapArgs: function(a) {
 },
 
 /**
- * @function {static string} trim
- * Trims the leading and trailing whitespace from a string.
- * @param {string} s String to trim.
- * @return Trimmed string.
- */
-trim: function(s) {
-    return (s ? s.replace(/^\s+|\s+$/g, "") : "");
-},
-
-/**
- * @function {static} assert
+ * @function assert
  * Throws an error if the specfied value is falsey.
  * @param {boolean} value Value to test.
  * @param {optional string} msg Message to display if falsey.

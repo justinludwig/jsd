@@ -6,7 +6,12 @@
  * @class JSD
  * Main jsd class.
  */
-function JSD() {
+function JSD(o) {
+    // copy properties from o
+    if (o)
+        for (var i in o)
+            this[i] = o[i];
+
     return this;
 }
 

@@ -6,6 +6,8 @@ load("src/utl.js");
 load("src/test/utl_test.js");
 load("src/jsd.js");
 load("src/test/jsd_test.js");
+load("src/jst.js");
+load("src/test/jst_test.js");
 
 print("running...");
 
