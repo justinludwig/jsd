@@ -1,0 +1,17 @@
+<%@ page file="index.html" %>
+<html>
+<head>
+<title>All Tags</title>
+</head>
+<body>
+
+<h1>All Tags</h1>
+<%= jsd.tags.length %>
+
+<% for (var i = 0, tag; tag = jsd.tags[i]; i++) { %>
+    <h3><%= tag.name %></h3>
+    <p><%= tag.modifiers.join(" ") %> <b><%= tag.value %></b> <%= tag.text %></p>
+<% } %>
+
+</body>
+</html>

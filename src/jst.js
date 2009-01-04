@@ -136,3 +136,7 @@ JST.prototype.parseDirective = function(s) {
     // invoke directive handler
     return director(directive, attrs);
 }
+
+JST.directors["page"] = JST.pageDirector = function(n, o) {
+    return "out(\"\\n==========" + Utl.escapeJS(o.file) + "==========\\n\");";
+}

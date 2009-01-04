@@ -143,6 +143,24 @@ propertyValues: function(o) {
 },
 
 /**
+ * @function addToArrayProperty
+ * Adds (or creates and adds) the specified value
+ * to the array with the specified name.
+ * @param o Object to which to add.
+ * @param {string} name Array property name.
+ * @param value Value to add to array.
+ * @param {optional boolean} True to pluralize array property name.
+ */
+addToArrayProperty: function(o, name, value, pluralize) {
+    if (pluralize)
+        name = Utl.pluralize(tag.name);
+        
+    if (!o[name])
+        o[name] = [];
+    o[name].push(value);
+},
+
+/**
  * @function {string[string]} mapArgs
  * Maps dash cmd-line args (ie --foo) to their values.
  * For example maps ["-f", "x", "-bar", "--foo", "y"]
@@ -156,6 +174,43 @@ mapArgs: function(a) {
         if (/^-+/.test(a[i]))
             m[a[i].replace(/^-+/, "")] = (!/^-+/.test(a[i+r1i]) ? a[i+1] : "");
     return m;
+},
+
+/**
+ * @function {string[string]) splitIntoFiles
+ * Splits string marked with file delimiters
+ * into map of file names to file content.
+ * @param {string} s String to split.
+ * @return Map of file names to file content.
+ */
+splitIntoFiles: function(s) {
+    var o = {};
+    for (var re = /={10}([^=]+)={10}([^\v]*?)(?=={10}|$)/g, r; r = re.exec(s);)
+        o[Utl.trim(r[1])] = Utl.trim(r[2]);
+    return o;
+},
+
+/**
+ * @function {string} pluralize
+ * Converts word to plural.
+ * @param {string} s Word to pluralize.
+ * @return Plural word.
+ */
+pluralize: function(s) {
+    if (!s) return "";
+
+    var sc = Utl.pluralize.specialCases || {};
+    var r = sc[s];
+    if (r) return r;
+
+    var a = s.match(/(.*?)y$/);
+    if (a)
+        return a[1] + "ies";
+
+    if (/s$/.test(s))
+        return s + "es";
+
+    return s + "s";
 },
 
 /**

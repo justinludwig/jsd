@@ -21,3 +21,54 @@ function testParseSimple() {
 }
 TestParse.add("testParseSimple", testParseSimple);
 
+function testHierarchicalModeler() {
+    var jsd = { tags: [
+        new JSD.Tag("class", "Foo"),
+        new JSD.Tag("function", "f"),
+        new JSD.Tag("param", "x"),
+        new JSD.Tag("param", "y"),
+        new JSD.Tag("property", "p"),
+        new JSD.Tag("class", "Bar"),
+        new JSD.Tag("function", "g"),
+        new JSD.Tag("param", "a"),
+        new JSD.Tag("param", "b"),
+        new JSD.Tag("event", "e"),
+        new JSD.Tag("param", "ex"),
+        new JSD.Tag("param", "ey")
+    ] };
+    var oldChildToParents = JSD.hierarchicalModeler.childToParents;
+    JSD.hierarchicalModeler.childToParents = {
+        "function": ["class"],
+        property: ["class"],
+        event: ["class"],
+        param: ["function", "event"]
+    };
+    JSD.hierarchicalModeler.call(jsd, jsd);
+    JSD.hierarchicalModeler.childToParents = oldChildToParents;
+
+    Utl.assert(jsd.tags[0].functions, "test hierarchical modeler Foo functions");
+    Utl.assert(Utl.equals(1, jsd.tags[0].functions.length), "test hierarchical modeler functions length");
+    Utl.assert(Utl.equals("f", jsd.tags[0].functions[0].value), "test hierarchical modeler Foo.f");
+    Utl.assert(jsd.tags[0].properties, "test hierarchical modeler Foo properties");
+    Utl.assert(Utl.equals(1, jsd.tags[0].properties.length), "test hierarchical modeler Foo properties length");
+    Utl.assert(Utl.equals("p", jsd.tags[0].properties[0].value), "test hierarchical modeler Foo.p");
+    Utl.assert(jsd.tags[1].params, "test hierarchical modeler Foo.f params");
+    Utl.assert(Utl.equals(2, jsd.tags[1].params.length), "test hierarchical modeler Foo.f params length");
+    Utl.assert(Utl.equals("x", jsd.tags[1].params[0].value), "test hierarchical modeler Foo.f.x");
+    Utl.assert(Utl.equals("y", jsd.tags[1].params[1].value), "test hierarchical modeler Foo.f.y");
+    Utl.assert(jsd.tags[5].functions, "test hierarchical modeler Bar functions");
+    Utl.assert(Utl.equals(1, jsd.tags[5].functions.length), "test hierarchical modeler Bar functions length");
+    Utl.assert(Utl.equals("g", jsd.tags[5].functions[0].value), "test hierarchical modeler Bar.g");
+    Utl.assert(jsd.tags[5].events, "test hierarchical modeler Bar events");
+    Utl.assert(Utl.equals(1, jsd.tags[5].events.length), "test hierarchical modeler Bar events length");
+    Utl.assert(Utl.equals("e", jsd.tags[5].events[0].value), "test hierarchical modeler Bar.e");
+    Utl.assert(jsd.tags[6].params, "test hierarchical modeler Bar.g params");
+    Utl.assert(Utl.equals(2, jsd.tags[6].params.length), "test hierarchical modeler Bar.g params length");
+    Utl.assert(Utl.equals("a", jsd.tags[6].params[0].value), "test hierarchical modeler Bar.g.a");
+    Utl.assert(Utl.equals("b", jsd.tags[6].params[1].value), "test hierarchical modeler Bar.g.b");
+    Utl.assert(jsd.tags[9].params, "test hierarchical modeler Bar.e params");
+    Utl.assert(Utl.equals(2, jsd.tags[9].params.length), "test hierarchical modeler Bar.e params length");
+    Utl.assert(Utl.equals("ex", jsd.tags[9].params[0].value), "test hierarchical modeler Bar.e.ex");
+    Utl.assert(Utl.equals("ey", jsd.tags[9].params[1].value), "test hierarchical modeler Bar.e.ey");
+}
+TestModel.add("testHierarchicalModeler", testHierarchicalModeler);

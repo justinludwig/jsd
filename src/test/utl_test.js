@@ -46,3 +46,20 @@ function testEquals() {
 
 }
 TestUtl.add("testEquals", testEquals);
+
+function testSplitIntoFiles() {
+    Utl.assert(Utl.equals({}, Utl.splitIntoFiles()), "test null split into files");
+    Utl.assert(Utl.equals({}, Utl.splitIntoFiles("")), "test empty-string split into files");
+    Utl.assert(Utl.equals({}, Utl.splitIntoFiles("foo")), "test no-op split into files");
+    Utl.assert(Utl.equals({ "d/f1.txt": "bar", "d/f2.txt": "baz" }, Utl.splitIntoFiles("foo\n==========d/f1.txt==========\nbar\n==========d/f2.txt==========\nbaz")), "test simple split into files");
+}
+TestUtl.add("testSplitIntoFiles", testSplitIntoFiles);
+
+function testPluralize() {
+    Utl.assert(Utl.equals("", Utl.pluralize()), "test pluralize null");
+    Utl.assert(Utl.equals("", Utl.pluralize("")), "test pluralize empty-string");
+    Utl.assert(Utl.equals("foos", Utl.pluralize("foo")), "test pluralize foo");
+    Utl.assert(Utl.equals("fooses", Utl.pluralize("foos")), "test pluralize foos");
+    Utl.assert(Utl.equals("fooies", Utl.pluralize("fooy")), "test pluralize fooy");
+}
+TestUtl.add("testPluralize", testPluralize);
