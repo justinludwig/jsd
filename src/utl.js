@@ -153,7 +153,7 @@ propertyValues: function(o) {
  */
 addToArrayProperty: function(o, name, value, pluralize) {
     if (pluralize)
-        name = Utl.pluralize(tag.name);
+        name = Utl.pluralize(name);
         
     if (!o[name])
         o[name] = [];

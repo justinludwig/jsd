@@ -139,7 +139,7 @@ JSD.hierarchicalModeler = function() {
             for (var j = i - 1; j >= 0; j--) {
                 var parent = tags[j];
                 if (parents.indexOf(parent.name) != -1) {
-                    Utl.addToArrayProperty(this, tag.name, tag, true);
+                    Utl.addToArrayProperty(parent, tag.name, tag, true);
                     break;
                 }
             }
