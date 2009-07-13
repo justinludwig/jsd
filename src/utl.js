@@ -216,12 +216,31 @@ pluralize: function(s) {
 /**
  * @function assert
  * Throws an error if the specfied value is falsey.
- * @param {boolean} value Value to test.
+ * @param {boolean} expr Value to test.
  * @param {optional string} msg Message to display if falsey.
  */
 assert: function(expr, msg) {
-    if (!expr)
-        throw new Error(msg || "assertion failed");
+    if (expr) return;
+
+    msg = msg || "assertion failed";
+    Utl.log(Utl.dump(expr), "DEBUG", "assert");
+    throw new Error(msg);
+},
+
+/**
+ * @function assertEquals
+ * Throws an error if two objects are not equal.
+ * @param x First object .
+ * @param y Second object .
+ * @param {optional string} msg Message to display if not equal.
+ */
+assertEquals: function(x, y, msg) {
+    if (Utl.equals(x, y)) return;
+
+    msg = msg || "equals assertion failed";
+    Utl.log(Utl.dump(x), "DEBUG", "assert");
+    Utl.log(Utl.dump(y), "DEBUG", "assert");
+    throw new Error(msg);
 }
 } /** @end Utl */
 

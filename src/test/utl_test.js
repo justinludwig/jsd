@@ -6,20 +6,20 @@ var TestUtl = new Utl.TestSuite();
 Utl.TestAll.add("TestUtl", TestUtl);
 
 function testTrim() {
-    Utl.assert("" == Utl.trim(""), "test trim empty string");
-    Utl.assert("" == Utl.trim(" \n "), "test trim all-whitespace string");
-    Utl.assert("foo" == Utl.trim("foo"), "test trim no-whitespace string");
-    Utl.assert("foo bar baz" == Utl.trim("foo bar baz"), "test trim interior-whitespace string");
-    Utl.assert("foo bar baz" == Utl.trim(" \n foo bar baz"), "test trim leading-whitespace string");
-    Utl.assert("foo bar baz" == Utl.trim("foo bar baz \n "), "test trim trailing-whitespace string");
-    Utl.assert("foo bar baz" == Utl.trim(" \n foo bar baz \n "), "test trim leading-and-trailing-whitespace string");
+    Utl.assertEquals("", Utl.trim(""), "test trim empty string");
+    Utl.assertEquals("", Utl.trim(" \n "), "test trim all-whitespace string");
+    Utl.assertEquals("foo", Utl.trim("foo"), "test trim no-whitespace string");
+    Utl.assertEquals("foo bar baz", Utl.trim("foo bar baz"), "test trim interior-whitespace string");
+    Utl.assertEquals("foo bar baz", Utl.trim(" \n foo bar baz"), "test trim leading-whitespace string");
+    Utl.assertEquals("foo bar baz", Utl.trim("foo bar baz \n "), "test trim trailing-whitespace string");
+    Utl.assertEquals("foo bar baz", Utl.trim(" \n foo bar baz \n "), "test trim leading-and-trailing-whitespace string");
 }
 TestUtl.add("testTrim", testTrim);
 
 function testEscapeJS() {
-    Utl.assert("" == Utl.escapeJS(""), "test escapeJS empty string");
-    Utl.assert("foo" == Utl.escapeJS("foo"), "test escapeJS no-reserved-chars string");
-    Utl.assert("\\\\\\\'\\\"\\n\\rfoo\\\\\\\'\\\"\\n\\r" == Utl.escapeJS("\\\'\"\n\rfoo\\\'\"\n\r"), "test escapeJS reserved-chars string");
+    Utl.assertEquals("", Utl.escapeJS(""), "test escapeJS empty string");
+    Utl.assertEquals("foo", Utl.escapeJS("foo"), "test escapeJS no-reserved-chars string");
+    Utl.assertEquals("\\\\\\\'\\\"\\n\\rfoo\\\\\\\'\\\"\\n\\r", Utl.escapeJS("\\\'\"\n\rfoo\\\'\"\n\r"), "test escapeJS reserved-chars string");
 }
 TestUtl.add("testEscapeJS", testEscapeJS);
 
@@ -48,18 +48,18 @@ function testEquals() {
 TestUtl.add("testEquals", testEquals);
 
 function testSplitIntoFiles() {
-    Utl.assert(Utl.equals({}, Utl.splitIntoFiles()), "test null split into files");
-    Utl.assert(Utl.equals({}, Utl.splitIntoFiles("")), "test empty-string split into files");
-    Utl.assert(Utl.equals({}, Utl.splitIntoFiles("foo")), "test no-op split into files");
-    Utl.assert(Utl.equals({ "d/f1.txt": "bar", "d/f2.txt": "baz" }, Utl.splitIntoFiles("foo\n==========d/f1.txt==========\nbar\n==========d/f2.txt==========\nbaz")), "test simple split into files");
+    Utl.assertEquals({}, Utl.splitIntoFiles(), "test null split into files");
+    Utl.assertEquals({}, Utl.splitIntoFiles(""), "test empty-string split into files");
+    Utl.assertEquals({}, Utl.splitIntoFiles("foo"), "test no-op split into files");
+    Utl.assertEquals({ "d/f1.txt": "bar", "d/f2.txt": "baz" }, Utl.splitIntoFiles("foo\n==========d/f1.txt==========\nbar\n==========d/f2.txt==========\nbaz"), "test simple split into files");
 }
 TestUtl.add("testSplitIntoFiles", testSplitIntoFiles);
 
 function testPluralize() {
-    Utl.assert(Utl.equals("", Utl.pluralize()), "test pluralize null");
-    Utl.assert(Utl.equals("", Utl.pluralize("")), "test pluralize empty-string");
-    Utl.assert(Utl.equals("foos", Utl.pluralize("foo")), "test pluralize foo");
-    Utl.assert(Utl.equals("fooses", Utl.pluralize("foos")), "test pluralize foos");
-    Utl.assert(Utl.equals("fooies", Utl.pluralize("fooy")), "test pluralize fooy");
+    Utl.assertEquals("", Utl.pluralize(), "test pluralize null");
+    Utl.assertEquals("", Utl.pluralize(""), "test pluralize empty-string");
+    Utl.assertEquals("foos", Utl.pluralize("foo"), "test pluralize foo");
+    Utl.assertEquals("fooses", Utl.pluralize("foos"), "test pluralize foos");
+    Utl.assertEquals("fooies", Utl.pluralize("fooy"), "test pluralize fooy");
 }
 TestUtl.add("testPluralize", testPluralize);

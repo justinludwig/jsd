@@ -6,27 +6,33 @@ load("src/utl.js");
 load("src/jsd.js");
 load("src/jst.js");
 
-Utl.readDirectory = function(file, filter, charset) {
+Utl.readDirectory = function(file, filter, header, footer, charset) {
     if (!file.exists()) return "";
 
     if (file.isDirectory()) {
         var a = [];
         var files = filter ? file.listFiles(filter) : file.listFiles();
         for (var i = 0; i < files.length; i++)
-            a.push(Utl.readDirectory(files[i], filter, charset));
+            a.push(Utl.readDirectory(files[i], filter, header, footer, charset));
         return a.join("");
     }
 
-    return readFile(file.getPath(), charset || "utf8");
+    header = header ? header.replace(/\{([^}]+)\}/g, function(s, s1) {
+        var fn = "get" + s1.charAt(0).toUpperCase() + s1.substring(1);
+        return file[fn]();
+    }) : "";
+    footer = footer || "";
+
+    return header + readFile(file.getPath(), charset || "utf8") + footer;
 }
 
-Utl.readDirectories = function(files, filter, charset) {
+Utl.readDirectories = function(files, filter, header, footer, charset) {
     var a = [];
     for (var i = 0; i < files.length; i++) {
         var file = new java.io.File(files[i]);
-        a.push(Utl.readDirectory(file, filter));
+        a.push(Utl.readDirectory(file, filter, header, footer, charset));
     }
-    return a.join("\n");
+    return a.join("");
 }
 
 Utl.createDirectoryAndFileTypeFilter = function(type) {
@@ -46,7 +52,16 @@ Utl.writeToDirectory = function(dir, s) {
     // write files
     var files = Utl.splitIntoFiles(s);
     for (var i in files)
-        Utl.writeFile(dir + i, files[i]);
+        try {
+            // make directory structure
+            var file = new java.io.File(dir + i);
+            var parent = file.getParentFile();
+            parent.mkdirs();
+            // write file
+            Utl.writeFile(file, files[i]);
+        } catch (e) {
+            Utl.log(e, "ERROR", "rhino");
+        }
 }
 
 Utl.writeFile = function(file, s) {
@@ -77,8 +92,9 @@ print("running...");
         tpl = tpl.split(/\s/);
 
     var jsd = new JSD.TemplateDriven({
-        input: Utl.readDirectories(src, Utl.createDirectoryAndFileTypeFilter(".js")),
-        template: Utl.readDirectories(tpl, Utl.createDirectoryAndFileTypeFilter(".jst"))
+        input: Utl.readDirectories(src, Utl.createDirectoryAndFileTypeFilter(".js"), "\n/** @file {path} */\n", "\n/** @end */\n"),
+        template: Utl.readDirectories(tpl, Utl.createDirectoryAndFileTypeFilter(".jst")),
+        modelers: JSD.modelers
     });
     Utl.writeToDirectory(out, jsd.run());
 })(arguments);
