@@ -69,6 +69,12 @@ JST.prototype.wrap = function(s, args) {
             a.push(args[i]);
         }
     a.push("){\nvar __a=[];\nfunction out(x){__a.push(String(x));}\n");
+    a.push("function hout(x){out(Utl.escapeHTML(x));}\n");
+    a.push("function jout(x){out(Utl.escapeJS(x));}\n");
+    a.push("function uout(x){out(Utl.escapeURI(x));}\n");
+    a.push("function sout(x){out(Utl.safeURIScheme(x));}\n");
+    a.push("function nout(x){out(Utl.safeNumber(x));}\n");
+    a.push("function bout(x){out(Utl.safeBoolean(x));}\n");
     a.push(s || "");
     a.push("\nreturn __a.join(\"\");\n})");
     return a.join("");
@@ -85,16 +91,17 @@ JST.prototype.parse = function(s) {
     var directors = this.directors || JST.directors;
     var a = [], lastIndex = 0, type = "";
     // parse <%x %> tags
-    for (var re = /(?:^|%>)([^\v]*?)(?:<%([@!=]?)|$)/g, r; r = re.exec(s);) {
+    for (var re = /(?:^|%>)([^\v]*?)(?:<%([hjusnb]?[@!=])?|$)/g, r; r = re.exec(s);) {
         // tag content
         var js = Utl.trim(s.substring(lastIndex, r.index));
 
         // handle tag end
         switch (type) {
-            case "=": a.push(js); a.push(");"); break;
             case "@": a.push(this.parseDirective(js)); break;
             default: a.push(js); break;
         }
+        if (/=$/.test(type))
+            a.push(");");
 
         // print literal content (outside of tags)
         a.push("\nout(\"");
@@ -107,8 +114,11 @@ JST.prototype.parse = function(s) {
         type = r[2] || "";
 
         // handle tag start
-        switch (type) {
-            case "=": a.push("out("); break;
+        if (/=$/.test(type)) {
+            // convert <%h=%> into hout(), etc
+            if (!/^=/.test(type))
+                a.push(type.charAt(0));
+            a.push("out(");
         }
     }
 
@@ -134,9 +144,10 @@ JST.prototype.parseDirective = function(s) {
         attrs[r[1]] = r[2];
 
     // invoke directive handler
-    return director(directive, attrs);
+    return director.call(this, directive, attrs);
 }
 
-JST.directors["page"] = JST.pageDirector = function(n, o) {
-    return "out(\"\\n==========" + Utl.escapeJS(o.file) + "==========\\n\");";
+JST.directors.page = JST.pageDirector = function(n, o) {
+    var file = Utl.escapeJS(o.file);
+    return "jsd.pageUrl=\"" + file + "\";out(\"\\n==========" + file + "==========\\n\");";
 }

@@ -6,6 +6,7 @@ var TestUtl = new Utl.TestSuite();
 Utl.TestAll.add("TestUtl", TestUtl);
 
 function testTrim() {
+    Utl.assertEquals("", Utl.trim(null), "test trim null");
     Utl.assertEquals("", Utl.trim(""), "test trim empty string");
     Utl.assertEquals("", Utl.trim(" \n "), "test trim all-whitespace string");
     Utl.assertEquals("foo", Utl.trim("foo"), "test trim no-whitespace string");
@@ -16,12 +17,58 @@ function testTrim() {
 }
 TestUtl.add("testTrim", testTrim);
 
+function testEscapeHTML() {
+    Utl.assertEquals("", Utl.escapeHTML(null), "test escapeHTML null");
+    Utl.assertEquals("", Utl.escapeHTML(""), "test escapeHTML empty string");
+    Utl.assertEquals("foo", Utl.escapeHTML("foo"), "test escapeHTML no-reserved-chars string");
+    Utl.assertEquals("&amp;&lt;&gt;&quot;&#39;", Utl.escapeHTML("&<>\"\'"), "test escapeHTML reserved-chars string");
+}
+TestUtl.add("testEscapeHTML", testEscapeHTML);
+
 function testEscapeJS() {
-    Utl.assertEquals("", Utl.escapeJS(""), "test escapeJS empty string");
+    Utl.assertEquals("", Utl.escapeJS(null), "test escapeJS null");
     Utl.assertEquals("foo", Utl.escapeJS("foo"), "test escapeJS no-reserved-chars string");
     Utl.assertEquals("\\\\\\\'\\\"\\n\\rfoo\\\\\\\'\\\"\\n\\r", Utl.escapeJS("\\\'\"\n\rfoo\\\'\"\n\r"), "test escapeJS reserved-chars string");
 }
 TestUtl.add("testEscapeJS", testEscapeJS);
+
+function testEscapeURI() {
+    Utl.assertEquals("", Utl.escapeURI(""), "test escapeURI empty string");
+    Utl.assertEquals("foo", Utl.escapeURI("foo"), "test escapeURI no-reserved-chars string");
+    Utl.assertEquals("%3F%26%3D%3C%3E%22%27.-_~", Utl.escapeURI("?&=<>\"\'.-_~").toUpperCase(), "test escapeURI reserved-chars string");
+}
+TestUtl.add("testEscapeURI", testEscapeURI);
+
+function testSafeURIScheme() {
+    Utl.assertEquals("", Utl.safeURIScheme(null), "test safeURIScheme null");
+    Utl.assertEquals("", Utl.safeURIScheme(""), "test safeURIScheme empty string");
+    Utl.assertEquals("https://foo", Utl.safeURIScheme("https://foo"), "test safeURIScheme safe scheme");
+    Utl.assertEquals("./foo", Utl.safeURIScheme("./foo"), "test safeURIScheme safe path");
+    Utl.assertEquals("./foo", Utl.safeURIScheme("foo"), "test safeURIScheme unsafe path");
+}
+TestUtl.add("testSafeURIScheme", testSafeURIScheme);
+
+function testSafeNumber() {
+    Utl.assertEquals(0, Utl.safeNumber(null), "test safeNumber null");
+    Utl.assertEquals(0, Utl.safeNumber(""), "test safeNumber empty string");
+    Utl.assertEquals(1, Utl.safeNumber(true), "test safeNumber boolean true");
+    Utl.assertEquals(1.23, Utl.safeNumber(1.23), "test safeNumber number");
+    Utl.assertEquals(1.23, Utl.safeNumber("1.23"), "test safeNumber string number");
+    Utl.assertEquals(0, Utl.safeNumber("1px"), "test safeNumber string non-number");
+}
+TestUtl.add("testSafeNumber", testSafeNumber);
+
+function testSafeBoolean() {
+    Utl.assertEquals(false, Utl.safeBoolean(null), "test safeBoolean null");
+    Utl.assertEquals(false, Utl.safeBoolean(""), "test safeBoolean empty string");
+    Utl.assertEquals(true, Utl.safeBoolean(true), "test safeBoolean boolean true");
+    Utl.assertEquals(true, Utl.safeBoolean(1.23), "test safeBoolean number");
+    Utl.assertEquals(true, Utl.safeBoolean("true"), "test safeBoolean string true");
+    Utl.assertEquals(true, Utl.safeBoolean("TRUE"), "test safeBoolean string upper-case true");
+    Utl.assertEquals(true, Utl.safeBoolean("1.23"), "test safeBoolean string number");
+    Utl.assertEquals(false, Utl.safeBoolean("1px"), "test safeBoolean string non-number");
+}
+TestUtl.add("testSafeBoolean", testSafeBoolean);
 
 function testEquals() {
     Utl.assert(Utl.equals(), "assert undefined equals undefined");

@@ -18,13 +18,83 @@ trim: function(s) {
 },
 
 /**
+ * @function {string} escapeHTML
+ * Escapes HTML element/attribute content.
+ * @param {string} s String to escape.
+ * @return Escaped string.
+ */
+escapeHTML: function(s) {
+    if (!s) return "";
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/[\0-\x08\x11\x12\x14-\x1f\x7f]/, "");
+},
+
+/**
  * @function {string} escapeJS
  * Escapes javascript string content.
  * @param {string} s String to escape.
  * @return Escaped string.
  */
 escapeJS: function(s) {
-    return s.replace(/([\\'"])/g, "\\$1").replace(/\n/g, "\\n").replace(/\r/g, "\\r");
+    if (!s) return "";
+    return s.replace(/([\\'"])/g, "\\$1").replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/[\0-\x08\x10-\x1f\x7f]/, "");
+},
+
+/**
+ * @function {string} escapeURI
+ * Escapes uri parameter content.
+ * @param {string} s String to escape.
+ * @return Escaped string.
+ */
+escapeURI: function(s) {
+    if (!s) return "";
+    return s.replace(/[^a-zA-Z0-9\.\-_~]/g, function(s) {
+        var c = s.charCodeAt(0);
+        // strip control chars
+        if ((c < 0x20 && c != 9 && c != 10 && c != 13) || c == 0x7f)
+            return "";
+        // escape space as +
+        if (c == 0x20)
+            return "+";
+        // make sure single-quote and some extra cruft gets escaped
+        if (c < 0x2d)
+            return "%" + c.toString(16).toUpperCase();
+        // use native escaping for everything else
+        return encodeURIComponent(s);
+    });
+},
+
+/**
+ * @function {string} safeURIScheme
+ * Validates that the specified string is not a javascript url.
+ * @param {string} s String to validate.
+ * @return Specified string if safe, "./" + s if unsafe.
+ */
+safeURIScheme: function(s) {
+    if (!s) return "";
+    return (/^(http|ftp|mail|[\/\.~])/.test(s) ? s : "./" + s);
+},
+
+/**
+ * @function {number} safeNumber
+ * Converts the specified value to a number.
+ * Converts a number to a number, boolean true to 1, a string representing a number to the number, and everything else to 0.
+ * @param x Value to convert.
+ * @return Number value.
+ */
+safeNumber: function(x) {
+    return Number(x) || 0;
+},
+
+/**
+ * @function {boolean} safeBoolean
+ * Converts the specified value to a boolean.
+ * Converts boolean true, case-insensitive string "true", and non-zero number
+ * to boolean true; converts everything else to boolean false.
+ * @param x Value to convert.
+ * @return Boolean value.
+ */
+safeBoolean: function(x) {
+    return Boolean(Number(x)) || /^true$/i.test(x);
 },
 
 /**
