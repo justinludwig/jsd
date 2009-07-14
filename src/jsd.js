@@ -102,6 +102,26 @@ JSD.Tag = function(name, value, text, modifiers, inner) {
     return this;
 }
 
+JSD.Tag.sortByValue = function(list) {
+    list.sort(function(x, y) {
+        var xvalue = x.value || "", yvalue = y.value || "";
+        if (xvalue < yvalue) return -1;
+        if (xvalue > yvalue) return 1;
+        return 0;
+    });
+    return list;
+}
+
+JSD.Tag.sortByArrayValue = function(list) {
+    list.sort(function(x, y) {
+        var xvalue = x[0].value || "", yvalue = y[0].value || "";
+        if (xvalue < yvalue) return -1;
+        if (xvalue > yvalue) return 1;
+        return 0;
+    });
+    return list;
+}
+
 /**
  * @class JSD.TemplateDriven
  * Template-driven class jsd.
@@ -140,8 +160,6 @@ JSD.hierarchicalModeler = function() {
                     //Utl.log(tag.name + ": " +  tag.value + ", parent " + parent.name + ": " + parent.value);
                     // add child to foos array in parent tag
                     Utl.addToArrayProperty(parent, tag.name, tag, true);
-                    // set parent on child tag
-                    tag.parent = parent;
                     break;
                 }
             }
@@ -196,14 +214,14 @@ JSD.endNamespaceModeler = function() {
 }
 
 JSD.allNamespacesModeler = function() {
-    var list = JSD.allNamespacesModeler.namespaceTags;
-    if (!list) return;
+    var names = JSD.allNamespacesModeler.namespaceTags;
+    if (!names) return;
 
-    // create list/map of all namespaces
-    var all = {};
+    // list including each namespace tag object
+    var list = [];
     // recursively prefix each local name with the appropriate full namesapce
     function recurse(parent, space) {
-        for (var i = 0, name; name = list[i]; i++) {
+        for (var i = 0, name; name = names[i]; i++) {
             var tags = parent[Utl.pluralize(name)];
             if (tags)
                 for (var j = 0, tag; tag = tags[j]; j++) {
@@ -211,24 +229,92 @@ JSD.allNamespacesModeler = function() {
                     // prefix name
                     tag.value = space + tag.value;
 
-                    // use this tag as cannonical for name
-                    // if existing tag doesn't have any descriptive text
-                    var existing = all[tag.value];
-                    if (!existing || !existing.text)
-                        all[tag.value] = tag;
+                    // don't include reference to exact same tag twice
+                    if (list.indexOf(tag) == -1)
+                        list.push(tag);
                     
                     // recurse into descendant tags
-                    recurse(tag, tag.value + ".");
+                    recurse(tag, (tag.value ? tag.value + "." : ""));
                 }
         }
     }
     recurse(this, "");
     
-    // create sorted master array of all namespaces
-    var ns = this.allNamespaces = [];
-    for (var i in all)
-        ns.push(all[i]);
-    ns.sort();
+    // create map of all namespaces; each ns is an array of tags
+    var map = {};
+    for (var i = 0, tag; tag = list[i]; i++) {
+        var multi = map[tag.value] || [];
+        map[tag.value] = multi;
+        multi.push(tag);
+    }
+
+    // create allNamespaces property
+    this.allNamespaces = {
+        sort: JSD.allNamespacesModeler.sort,
+        sortChildren: JSD.allNamespacesModeler.sortChildren,
+        top: JSD.allNamespacesModeler.top,
+        containers: JSD.allNamespacesModeler.containers,
+        map: map
+    };
+}
+
+JSD.allNamespacesModeler.sort = function(jsd) {
+    var map = jsd ? jsd.allNamespaces.map : this.map;
+
+    // create list of all namespaces
+    var list = [];
+    for (var i in map)
+        list.push(map[i]);
+        
+    return JSD.Tag.sortByArrayValue(list);
+}
+
+JSD.allNamespacesModeler.sortChildren = function(tags, name) {
+    var master = [];
+    if (!tags || !tags.length) return master;
+    
+    // create master list of children
+    var plural = Utl.pluralize(name);
+    for (var i = 0, tag; tag = tags[i]; i++)
+        for (var j = 0, child, children = tag[plural] || []; child = children[j]; j++)
+            master.push(child);
+        
+    return JSD.Tag.sortByValue(master);
+}
+
+JSD.allNamespacesModeler.top = function(jsd) {
+    var map = jsd ? jsd.allNamespaces.map : this.map;
+
+    // create list of top-level namespaces
+    var list = [];
+    for (var i in map) {
+        var tags = map[i];
+        if (!/\./.test(tags[0].value))
+            list.push(tags);
+    }
+        
+    return JSD.Tag.sortByArrayValue(list);
+}
+
+JSD.allNamespacesModeler.containers = function(jsd) {
+    var map = jsd ? jsd.allNamespaces.map : this.map;
+    var names = JSD.allNamespacesModeler.namespaceTags;
+
+    // create list of namespaces with child namespaces
+    var list = [];
+    for (var i in map) {
+        var tags = map[i];
+        for (var j = 0, tag; tag = tags[j]; j++)
+            for (var k = 0, name; name = names[k]; k++) {
+                var children = tag[Utl.pluralize(name)];
+                if (children) {
+                    list.push(tags);
+                    break;
+                }
+            }
+    }
+        
+    return JSD.Tag.sortByArrayValue(list);
 }
 
 /**

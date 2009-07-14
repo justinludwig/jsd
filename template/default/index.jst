@@ -1,12 +1,23 @@
 <%@ page file="index.html" %>
 <html>
 <head>
-<title>All Tags</title>
+<title>Namespaces</title>
 </head>
 <body>
 
-<h1>All Tags</h1>
-<%= jsd.tags.length %>
+<h1>Namespaces</h1>
+<% for (var i = 0, tags, lists = jsd.allNamespaces.containers(); tags = lists[i]; i++) { %>
+        <h3><a href="<%= tags[0].value.replace(/\./, "/") %>.html"><%= tags[0].value %></a></h3>
+    <% for (var j = 0, tag; tag = tags[j]; j++) { %>
+        <p><%= tag.text %></p>
+    <% }
+} %>
+
+<pre>
+<% for (var i in jsd) { %>
+<%=i%>
+<% } %>
+</pre>
 
 <% for (var i = 0, tag; tag = jsd.tags[i]; i++) { %>
     <h3><%= tag.name %></h3>
