@@ -148,6 +148,22 @@ JST.prototype.parseDirective = function(s) {
 }
 
 JST.directors.page = JST.pageDirector = function(n, o) {
-    var file = Utl.escapeJS(o.file);
-    return "jsd.pageUrl=\"" + file + "\";out(\"\\n==========" + file + "==========\\n\");";
+    var file = o.fileVar;
+    if (!file)
+        file = "\"" + Utl.escapeJS(o.file) + "\"";
+    
+    return [
+        "jsd.pageUrl=", file, ";",
+        "out(\"\\n==========\");out(", file, ");out(\"==========\\n\");"
+    ].join("");
+}
+
+JST.directors["function"] = JST.functionDirector = function(n, o) {
+    return [
+        "function ", o.name, "(", (o.arguments || ""), ") {"
+    ].join("");
+}
+
+JST.directors.end = JST.endDirector = function(n, o) {
+    return "}";
 }

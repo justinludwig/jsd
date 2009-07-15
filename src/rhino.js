@@ -12,6 +12,7 @@ Utl.readDirectory = function(file, filter, header, footer, charset) {
     if (file.isDirectory()) {
         var a = [];
         var files = filter ? file.listFiles(filter) : file.listFiles();
+        files.sort();
         for (var i = 0; i < files.length; i++)
             a.push(Utl.readDirectory(files[i], filter, header, footer, charset));
         return a.join("");

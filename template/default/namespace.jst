@@ -1,17 +1,18 @@
-<%@ page file="index.html" %>
 <%
-header("Namespaces");
-
 for (var i = 0, tags, lists = jsd.allNamespaces.containers(); tags = lists[i]; i++) {
     var ns = tags[0].value || JSD.globalsNamespace;
     var file = ns.replace(/\./, "/") + ".html";
+    var title = tags[0].name + " " + ns;
 %>
-    <h3><a href="<%= file %>"><%= ns %></a></h3>
-    <% for (var j = 0, tag; tag = tags[j]; j++) { %>
-        <p><%= tag.text %></p>
+<%@ page fileVar="file" %>
 <%
-    }
-}
+header(title);
+%>
+<% for (var j = 0, tag; tag = tags[j]; j++) { %>
+    <p><%= tag.text %></p>
+<% } %>
 
+<%
 footer();
+}
 %>
