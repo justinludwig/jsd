@@ -363,6 +363,41 @@ JSD.emptyFileModeler = function() {
 }
 
 /**
+ * @function nameModeler
+ * Modeler which replaces parent's value with value of "name" tag.
+ */
+JSD.nameModeler = function() {
+    for (var i = 0, tag, tags = this.tags; tag = tags[i]; i++) {
+        var names = tag.names;
+        if (!names || !names[0]) continue;
+
+        // replace parsed name with specified name
+        tag.value = names[0];
+
+        // remove name tags
+        delete tag.names;
+    }
+}
+
+/**
+ * @function descriptionModeler
+ * Modeler which inserts "description" tag into parent tag's "text" property.
+ */
+JSD.descriptionModeler = function() {
+    for (var i = 0, tag, tags = this.tags; tag = tags[i]; i++) {
+        var descriptions = tag.descriptions;
+        if (!descriptions) continue;
+
+        // insert descriptions into text
+        for (var j = 0, desc; desc = descriptions[j]; j++)
+            tag.text = [desc.value, desc.text, tag.text].join(" ");
+
+        // remove description tags
+        delete tag.descriptions;
+    }
+}
+
+/**
  * @function linkModeler
  * Modeler which replaces inline link tags with an actual link.
  */

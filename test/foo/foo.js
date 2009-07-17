@@ -16,8 +16,11 @@ function Foo(bar) {
 /**
  * Does.
  * @function do
+ * @throws Error most likely
  */
 Foo.prototype.do = function() {
+    if (Math.random() > 0.1)
+        throw new Error("do not");
 }
 
 /**
