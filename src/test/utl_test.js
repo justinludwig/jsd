@@ -102,6 +102,51 @@ function testSplitIntoFiles() {
 }
 TestUtl.add("testSplitIntoFiles", testSplitIntoFiles);
 
+function testMap() {
+    function fn(x, i) {
+        return x + i;
+    }
+    Utl.assertEquals([], Utl.map(), "test map null");
+    Utl.assertEquals([], Utl.map([], fn), "test map empty array");
+    Utl.assertEquals([1], Utl.map([1], fn), "test map 1");
+    Utl.assertEquals([1, 3, 5], Utl.map([1, 2, 3], fn), "test map 1, 2, 3");
+}
+TestUtl.add("testMap", testMap);
+
+function testMerge() {
+    Utl.assertEquals({}, Utl.merge(), "test merge null");
+    Utl.assertEquals({}, Utl.merge([]), "test merge empty array");
+    Utl.assertEquals({
+        a: 1, b: "b", c: ["c", 3], x: 2, y: "y", z: ["z", 6]
+    }, Utl.merge([{
+        a: 1, b: "b", c: ["c", 3]
+    }, {
+        x: 2, y: "y", z: ["z", 6]
+    }]), "test merge no overlap");
+    Utl.assertEquals({
+        a: 1, b: "b y", c: ["c", 3, "z", 6]
+    }, Utl.merge([{
+        a: 1, b: "b", c: ["c", 3]
+    }, {
+        a: 2, b: "y", c: ["z", 6]
+    }]), "test merge complete overlap");
+    Utl.assertEquals({
+        a: 1, b: "b", c: ["c", 3]
+    }, Utl.merge([{
+        a: 1, b: "b", c: ["c", 3]
+    }, {
+        a: 1, b: "b", c: ["c", 3]
+    }]), "test merge complete duplication");
+    Utl.assertEquals({
+        a: 1, b: "b b y", c: ["c", 3, "z", 6]
+    }, Utl.merge([{
+        a: 1, b: "b", c: ["c", 3]
+    }, {
+        a: 2, b: "b y", c: ["c", "z", 3, 6]
+    }]), "test merge partial duplication");
+}
+TestUtl.add("testMerge", testMerge);
+
 function testPluralize() {
     Utl.assertEquals("", Utl.pluralize(), "test pluralize null");
     Utl.assertEquals("", Utl.pluralize(""), "test pluralize empty-string");
@@ -110,3 +155,16 @@ function testPluralize() {
     Utl.assertEquals("fooies", Utl.pluralize("fooy"), "test pluralize fooy");
 }
 TestUtl.add("testPluralize", testPluralize);
+
+function testFirstSentence() {
+    Utl.assertEquals("", Utl.firstSentence(), "test firstSentence null");
+    Utl.assertEquals("", Utl.firstSentence(""), "test firstSentence empty-string");
+    Utl.assertEquals("foo", Utl.firstSentence("foo"), "test firstSentence foo");
+    Utl.assertEquals("foo bar baz", Utl.firstSentence(" foo bar baz "), "test firstSentence foo bar baz");
+    Utl.assertEquals("foo.", Utl.firstSentence(" foo. bar baz "), "test firstSentence foo. bar baz");
+    Utl.assertEquals("foo bar.", Utl.firstSentence(" foo bar. baz "), "test firstSentence foo bar. baz");
+    Utl.assertEquals("foo bar baz.", Utl.firstSentence(" foo bar baz. "), "test firstSentence foo bar baz.");
+    Utl.assertEquals("foo:\n1.2,\n3.4.", Utl.firstSentence("foo:\n1.2,\n3.4.\nbar"), "test firstSentence false foo");
+    Utl.assertEquals("fo...", Utl.firstSentence("foo", 2), "test firstSentence foo 2");
+}
+TestUtl.add("testFirstSentence", testFirstSentence);

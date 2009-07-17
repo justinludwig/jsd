@@ -1,16 +1,142 @@
 
-<%@ function name="header" arguments="title" %>
+<%@ function name="header" arguments="title, fullTitle" %>
 <html>
 <head>
 <title><%=title%></title>
 </head>
 <body>
 
-<h1><%=title%></h1>
+<h1><%=fullTitle || title%></h1>
 <%@ end %>
+
 
 <%@ function name="footer" %>
 </body>
 </html>
+<%@ end %>
+
+
+<%@ function name="paramsSummary" arguments="params" %>
+<% if (params) { %>
+<p class="params">(
+<% for (var i = 0, param; param = params[i]; i++) { %>
+    <% if (i > 0) { %>,<% } %>
+    <%= param.modifiers.join(" ") %> <em><%= param.value %></em>
+<% } %>
+)</p>
+<% } %>
+<%@ end %>
+
+
+<%@ function name="paramsDetail" arguments="params" %>
+<% if (params) { %>
+<dl>
+<% for (var i = 0, param; param = params[i]; i++) { %>
+    <dt><%= param.modifiers.join(" ") %> <em><%= param.value %></em></dt>
+    <dd><%= param.text %></dd>
+<% } %>
+</dl>
+<% } %>
+<%@ end %>
+
+
+<%@ function name="summary" arguments="tag" %>
+<%
+var localName = tag.value.replace(/.*\./, "");
+%>
+
+<h3><%= tag.modifiers.join(" ") %> <%= tag.name %> <em><a href="#<%= localName %>"><%= localName %></a></em></h3>
+
+<%
+paramsSummary(tag.params);
+
+for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
+%>
+    <h4><%= set.modifiers.join(" ") %> <%= set.name %> <em><a href="#<%= localName %>-<%= set.value %>"><%= set.value %></a></em></h4>
+<%
+    paramsSummary(set.params);
+}
+%>
+
+<p><%= Utl.firstSentence(tag.text, 100) %></p>
+
+<%@ end %>
+
+
+<%@ function name="detail" arguments="tag" %>
+<%
+var localName = tag.value.replace(/.*\./, "");
+%>
+
+<h3 id="<%= localName %>"><%= tag.modifiers.join(" ") %> <%= tag.name %> <em><%= localName %></em></h3>
+
+<%
+paramsSummary(tag.params);
+
+for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
+%>
+    <h4><%= tag.modifiers.join(" ") %> <%= tag.name %> <em><%= localName %></em></h4>
+<%
+    paramsSummary(set.params);
+}
+%>
+
+<p><%= tag.text %></p>
+
+<%
+if (tag.params) {
+%>
+    <h5 id="<%= localName %>-parameters">Parameters</h5>
+<%
+    paramsDetail(tag.params);
+}
+
+for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
+%>
+    <h5 id="<%= localName %>-<%= set.value %>"><%= set.modifiers.join(" ") %> <%= set.name %> <em><%= set.value %></em></h5>
+<%
+    paramsDetail(set.params);
+}
+
+if (tag.returns) {
+%>
+    <h5>Returns</h5>
+<%
+    for (var i = 0, r; r = tag.returns[i]; i++) {
+%>
+    <p><%= r.value %> <%= r.text %></p>
+<%
+    }
+}
+%>
+
+<%@ end %>
+
+
+<%@ function name="childrenSummary" arguments="tag, name" %>
+<%
+var plural = Utl.pluralize(name);
+var children = tag[plural];
+if (children) {
+    var uppercase = plural.charAt(0).toUpperCase() + plural.substring(1);
+    %><h2 id="<%= plural %>-summary"><%= uppercase %> Summary</h2><%
+    for (var i = 0, child; child = children[i]; i++)
+        summary(child);
+}
+%>
+<%@ end %>
+
+
+<%@ function name="childrenDetail" arguments="tag, name" %>
+<%
+var plural = Utl.pluralize(name);
+var children = tag[plural];
+if (children) {
+    var uppercase = plural.charAt(0).toUpperCase() + plural.substring(1);
+    %><h2 id="<%= plural %>"><%= uppercase %></h2><%
+    for (var i = 0, child; child = children[i]; i++)
+        detail(child);
+}
+%>
 <%@ end %>
 

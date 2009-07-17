@@ -185,6 +185,24 @@ dump: function(o, tabs) {
 },
 
 /**
+ * @function map
+ * Applies specified function to each element in specified array,
+ * returning the corresponding results in a new array.
+ * @param a Array over which to iterate.
+ * @param fn Function to apply.
+ * @return An array of equal size (or at least empty).
+ */
+map: function(a, fn) {
+    if (!a || !a.length) return [];
+    if (!fn) return a.concat();
+
+    for (var i = 0, l = a.length, b = []; i < l; i++)
+        b[i] = fn(a[i], i);
+
+    return b;
+},
+
+/**
  * @function {string[]} propertyNames
  * Returns array of the property names for object o.
  * @param o Object for which to list property names.
@@ -210,6 +228,45 @@ propertyValues: function(o) {
         for (var i in o)
             a.push(o[i]);
     return a;
+},
+
+/**
+ * @function merge
+ * Merges the objects in the specified array into a new object.
+ * @param {object[]} a Array of objects to merge.
+ * @return New merged object.
+ */
+merge: function(a) {
+    var o = {};
+    if (!a || !a.length) return o;
+
+    for (var i = 0, l = a.length; i < l; i++) {
+        var x = a[i];
+        if (!x) continue;
+
+        for (var j in x) {
+            var original = x[j];
+            var merged = o[j];
+
+            if (original == null) continue;
+            if (original.constructor == Array) {
+                if (!merged)
+                    o[j] = merged = [];
+                if (merged.constructor != Array)
+                    o[j] = merged = [merged];
+                for (var k = 0, kl = original.length; k < kl; k++)
+                    if (merged.indexOf(original[k]) == -1)
+                        merged.push(original[k]);
+
+            } else if (!merged) {
+                o[j] = original;
+            } else if (original.constructor == String && original != merged) {
+                o[j] += " " + original;
+            }
+        }
+    }
+
+    return o;
 },
 
 /**
@@ -271,7 +328,8 @@ pluralize: function(s) {
 
     var sc = Utl.pluralize.specialCases || {};
     var r = sc[s];
-    if (r) return r;
+    // handle "constructor"
+    if (typeof r == "string") return r;
 
     var a = s.match(/(.*?)y$/);
     if (a)
@@ -281,6 +339,29 @@ pluralize: function(s) {
         return s + "es";
 
     return s + "s";
+},
+
+/**
+ * @function {string} firstSentence
+ * Extracts the first sentence of the specified string,
+ * up to the optional maximum number of characters.
+ * @param {string} s String out of which to extract the first sentence.
+ * @param {optional string} max Maximum number of characters to extract.
+ * @return Plural word.
+ */
+firstSentence: function(s, max) {
+    if (!s) return "";
+    
+    // extract first sentence
+    var a = s.match(/[^\v]*?[\.?!]+\s/);
+    if (a)
+        s = a[0];
+    s = Utl.trim(s);
+
+    // optionally truncate
+    if (s.length > max)
+        s = s.substring(0, max) + "...";
+    return s;
 },
 
 /**

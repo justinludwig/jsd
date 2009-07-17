@@ -31,7 +31,7 @@ Foo.prototype.f = function(x) {
 }
 
 /**
- * @class {private} Foo.Foo2 Some "static inner" class.
+ * @class {private} Foo2 Some "static inner" class.
  */
 Foo.Foo2 = function() {
     return this;

@@ -1,18 +1,32 @@
 <%
-for (var i = 0, tags, lists = jsd.allNamespaces.containers(); tags = lists[i]; i++) {
-    var ns = tags[0].value || JSD.globalsNamespace;
+for (var i = 0, tag, tags = jsd.allNamespaces.containers(); tag = tags[i]; i++) {
+    var ns = tag.value || JSD.globalsNamespace;
     var file = ns.replace(/\./, "/") + ".html";
-    var title = tags[0].name + " " + ns;
-%>
-<%@ page fileVar="file" %>
-<%
-header(title);
-%>
-<% for (var j = 0, tag; tag = tags[j]; j++) { %>
-    <p><%= tag.text %></p>
-<% } %>
+    
+    %><%@ page fileVar="file" %><%
+    header(ns);
+    detail(tag);
 
-<%
-footer();
+    childrenSummary(tag, "namespace");
+    childrenSummary(tag, "interface");
+    childrenSummary(tag, "class");
+    childrenSummary(tag, "constructor");
+    childrenSummary(tag, "ifunction");
+    childrenSummary(tag, "function");
+    childrenSummary(tag, "event");
+    childrenSummary(tag, "struct");
+    childrenSummary(tag, "property");
+
+    childrenDetail(tag, "namespace");
+    childrenDetail(tag, "interface");
+    childrenDetail(tag, "class");
+    childrenDetail(tag, "constructor");
+    childrenDetail(tag, "ifunction");
+    childrenDetail(tag, "function");
+    childrenDetail(tag, "event");
+    childrenDetail(tag, "struct");
+    childrenDetail(tag, "property");
+
+    footer();
 }
 %>

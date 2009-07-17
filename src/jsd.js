@@ -217,36 +217,66 @@ JSD.allNamespacesModeler = function() {
     var names = JSD.allNamespacesModeler.namespaceTags;
     if (!names) return;
 
+    var nameslength = names.length;
+    var tags = this.tags;
+
     // list including each namespace tag object
     var list = [];
-    // recursively prefix each local name with the appropriate full namesapce
-    function recurse(parent, space) {
-        for (var i = 0, name; name = names[i]; i++) {
-            var tags = parent[Utl.pluralize(name)];
-            if (tags)
-                for (var j = 0, tag; tag = tags[j]; j++) {
-                    //Utl.log(tag.name + ": " + space + "/" + tag.value);
-                    // prefix name
-                    tag.value = space + tag.value;
+    for (var i = 0, tag; tag = tags[i]; i++)
+        // skip non-namespaces and global namespace
+        if (tag.value && names.indexOf(tag.name) != -1) {
+            list.push(tag);
 
-                    // don't include reference to exact same tag twice
-                    if (list.indexOf(tag) == -1)
-                        list.push(tag);
-                    
-                    // recurse into descendant tags
-                    recurse(tag, (tag.value ? tag.value + "." : ""));
-                }
+            // prefix child namespaces
+            for (var j = 0; j < nameslength; j++) {
+                var children = tag[Utl.pluralize(names[j])];
+                if (children)
+                    for (var k = 0, child; child = children[k]; k++)
+                        child.value = tag.value + "." + child.value;
+            }
         }
-    }
-    recurse(this, "");
     
-    // create map of all namespaces; each ns is an array of tags
+    // create map of all namespaces; each value is a tag or array of tags
     var map = {};
     for (var i = 0, tag; tag = list[i]; i++) {
-        var multi = map[tag.value] || [];
-        map[tag.value] = multi;
-        multi.push(tag);
+        var v = tag.value;
+        var existing = map[v];
+
+        if (!existing)
+            map[v] = tag;
+        else if (existing.constructor == Array)
+            existing.push(tag);
+        else
+            map[v] = [existing, tag];
     }
+
+    // combine arrays into single object, replacing references to each
+    var remap = [];
+    for (var i in map) {
+        var multi = map[i];
+        if (multi.constructor != Array) continue;
+
+        // replace array with combined object
+        var merged = Utl.merge(multi);
+        // remove extra namespace/scope decls from tag name
+        merged.name = merged.name.replace(/ namespace|namespace /g, "");
+        map[i] = merged;
+
+        // save originals to remap
+        for (var j = 0, tag; tag = multi[j]; j++)
+            remap.push({ original: tag, merged: merged });
+    }
+
+    // remap from multi-tags to merged tag
+    for (var i = 0, tag; tag = tags[i]; i++)
+        for (var j = 0; j < nameslength; j++) {
+            var children = tag[Utl.pluralize(names[j])];
+            if (children)
+                for (var k = 0, child; child = children[k]; k++)
+                    for (var m = 0, remapped; remapped = remap[m]; m++)
+                        if (remapped == child)
+                            children[k] = merged;
+        }
 
     // create allNamespaces property
     this.allNamespaces = {
@@ -266,7 +296,7 @@ JSD.allNamespacesModeler.sort = function(jsd) {
     for (var i in map)
         list.push(map[i]);
         
-    return JSD.Tag.sortByArrayValue(list);
+    return JSD.Tag.sortByValue(list);
 }
 
 JSD.allNamespacesModeler.sortChildren = function(tags, name) {
@@ -288,12 +318,12 @@ JSD.allNamespacesModeler.top = function(jsd) {
     // create list of top-level namespaces
     var list = [];
     for (var i in map) {
-        var tags = map[i];
-        if (!/\./.test(tags[0].value))
-            list.push(tags);
+        var tag = map[i];
+        if (!/\./.test(tag.value))
+            list.push(tag);
     }
         
-    return JSD.Tag.sortByArrayValue(list);
+    return JSD.Tag.sortByValue(list);
 }
 
 JSD.allNamespacesModeler.containers = function(jsd) {
@@ -303,18 +333,17 @@ JSD.allNamespacesModeler.containers = function(jsd) {
     // create list of namespaces with child namespaces
     var list = [];
     for (var i in map) {
-        var tags = map[i];
-        for (var j = 0, tag; tag = tags[j]; j++)
-            for (var k = 0, name; name = names[k]; k++) {
-                var children = tag[Utl.pluralize(name)];
-                if (children) {
-                    list.push(tags);
-                    break;
-                }
+        var tag = map[i];
+        for (var k = 0, name; name = names[k]; k++) {
+            var children = tag[Utl.pluralize(name)];
+            if (children) {
+                list.push(tag);
+                break;
             }
+        }
     }
         
-    return JSD.Tag.sortByArrayValue(list);
+    return JSD.Tag.sortByValue(list);
 }
 
 /**

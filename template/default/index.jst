@@ -2,15 +2,13 @@
 <%
 header("Namespaces");
 
-for (var i = 0, tags, lists = jsd.allNamespaces.containers(); tags = lists[i]; i++) {
-    var ns = tags[0].value || JSD.globalsNamespace;
+for (var i = 0, tag, tags = jsd.allNamespaces.containers(); tag = tags[i]; i++) {
+    var ns = tag.value || JSD.globalsNamespace;
     var file = ns.replace(/\./, "/") + ".html";
 %>
     <h3><a href="<%= file %>"><%= ns %></a></h3>
-    <% for (var j = 0, tag; tag = tags[j]; j++) { %>
-        <p><%= tag.text %></p>
+    <p><%= Utl.firstSentence(tag.text, 100) %></p>
 <%
-    }
 }
 
 footer();
