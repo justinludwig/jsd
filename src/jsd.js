@@ -112,16 +112,6 @@ JSD.Tag.sortByValue = function(list) {
     return list;
 }
 
-JSD.Tag.sortByArrayValue = function(list) {
-    list.sort(function(x, y) {
-        var xvalue = x[0].value || "", yvalue = y[0].value || "";
-        if (xvalue < yvalue) return -1;
-        if (xvalue > yvalue) return 1;
-        return 0;
-    });
-    return list;
-}
-
 /**
  * @class JSD.TemplateDriven
  * Template-driven class jsd.
@@ -281,7 +271,6 @@ JSD.allNamespacesModeler = function() {
     // create allNamespaces property
     this.allNamespaces = {
         sort: JSD.allNamespacesModeler.sort,
-        sortChildren: JSD.allNamespacesModeler.sortChildren,
         top: JSD.allNamespacesModeler.top,
         containers: JSD.allNamespacesModeler.containers,
         map: map
@@ -297,19 +286,6 @@ JSD.allNamespacesModeler.sort = function(jsd) {
         list.push(map[i]);
         
     return JSD.Tag.sortByValue(list);
-}
-
-JSD.allNamespacesModeler.sortChildren = function(tags, name) {
-    var master = [];
-    if (!tags || !tags.length) return master;
-    
-    // create master list of children
-    var plural = Utl.pluralize(name);
-    for (var i = 0, tag; tag = tags[i]; i++)
-        for (var j = 0, child, children = tag[plural] || []; child = children[j]; j++)
-            master.push(child);
-        
-    return JSD.Tag.sortByValue(master);
 }
 
 JSD.allNamespacesModeler.top = function(jsd) {
@@ -334,7 +310,7 @@ JSD.allNamespacesModeler.containers = function(jsd) {
     var list = [];
     for (var i in map) {
         var tag = map[i];
-        for (var k = 0, name; name = names[k]; k++) {
+        for (var j = 0, name; name = names[j]; j++) {
             var children = tag[Utl.pluralize(name)];
             if (children) {
                 list.push(tag);
@@ -344,6 +320,29 @@ JSD.allNamespacesModeler.containers = function(jsd) {
     }
         
     return JSD.Tag.sortByValue(list);
+}
+
+JSD.globalsModeler = function() {
+    var top = this.allNamespaces.top();
+    var containers = this.allNamespaces.containers();
+    var globals = this.globals = JSD.globalsModeler.tag;
+
+    // allow output to skip globals if empty
+    globals.empty = true;
+
+    for (var i = 0, tag; tag = top[i]; i++)
+        if (containers.indexOf(tag) == -1) {
+            var plural = Utl.pluralize(tag.name);
+            var a = globals[plural];
+
+            if (a)
+                a.push(tag);
+            else
+                globals[plural] = [tag];
+
+            // clear empty flag
+            globals.empty = false;
+        }
 }
 
 /**

@@ -118,7 +118,9 @@ if (tag.returns) {
 var plural = Utl.pluralize(name);
 var children = tag[plural];
 if (children) {
+    children = JSD.Tag.sortByValue(children.concat());
     var uppercase = plural.charAt(0).toUpperCase() + plural.substring(1);
+    
     %><h2 id="<%= plural %>-summary"><%= uppercase %> Summary</h2><%
     for (var i = 0, child; child = children[i]; i++)
         summary(child);
@@ -132,7 +134,9 @@ if (children) {
 var plural = Utl.pluralize(name);
 var children = tag[plural];
 if (children) {
+    children = JSD.Tag.sortByValue(children.concat());
     var uppercase = plural.charAt(0).toUpperCase() + plural.substring(1);
+
     %><h2 id="<%= plural %>"><%= uppercase %></h2><%
     for (var i = 0, child; child = children[i]; i++)
         detail(child);

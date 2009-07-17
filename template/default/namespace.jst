@@ -1,10 +1,14 @@
 <%
-for (var i = 0, tag, tags = jsd.allNamespaces.containers(); tag = tags[i]; i++) {
-    var ns = tag.value || JSD.globalsNamespace;
-    var file = ns.replace(/\./, "/") + ".html";
+// include globals: top-level non-containers
+var tags = jsd.allNamespaces.containers();
+if (!jsd.globals.empty)
+    tags = [jsd.globals].concat(tags);
+
+for (var i = 0, tag; tag = tags[i]; i++) {
+    var file = tag.value.replace(/\./, "/") + ".html";
     
     %><%@ page fileVar="file" %><%
-    header(ns);
+    header(tag.value);
     detail(tag);
 
     childrenSummary(tag, "namespace");
