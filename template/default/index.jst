@@ -8,9 +8,8 @@ if (!jsd.globals.empty)
     tags = [jsd.globals].concat(tags);
 
 for (var i = 0, tag; tag = tags[i]; i++) {
-    var file = tag.value.replace(/\./, "/") + ".html";
 %>
-    <h3><a href="<%= file %>"><%= tag.value %></a></h3>
+    <h3><%= jsd.linkTo(null, tag.value) %></h3>
     <p><%= Utl.firstSentence(tag.text, 100) %></p>
 <%
 }

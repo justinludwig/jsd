@@ -58,7 +58,7 @@ for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
 }
 %>
 
-<p><%= Utl.firstSentence(tag.text, 100) %></p>
+<p><%= jsd.replaceLinks(tag, Utl.firstSentence(tag.text, 100), __pageUrl) %></p>
 
 <%@ end %>
 
@@ -84,7 +84,7 @@ simpleAnnotationList(tag, "extends");
 simpleAnnotationList(tag, "implements");
 %>
 
-<p><%= tag.text %></p>
+<p><%= jsd.replaceLinks(tag, tag.text, __pageUrl) %></p>
 
 <%
 if (tag.params) {
@@ -101,7 +101,7 @@ for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
     paramsDetail(set.params);
 }
 
-simpleAnnotation(tag, "returns");
+simpleAnnotation(tag, "return");
 simpleAnnotation(tag, "throws");
 simpleAnnotation(tag, "deprecated");
 simpleAnnotation(tag, "since");
@@ -155,7 +155,7 @@ if (children) {
 %>
     <h5 id="<%= localName %>-<%= name %>"><%= title %></h5>
 <% for (var i = 0, child; child = children[i]; i++) { %>
-    <p><%= child.value %> <%= child.text %></p>
+    <p><%= child.value %> <%= jsd.replaceLinks(tag, child.text, __pageUrl) %></p>
 <% }
 } %>
 <%@ end %>
@@ -172,7 +172,7 @@ if (children) {
     <h5 id="<%= localName %>-<%= name %>"><%= title %></h5>
     <ul>
 <% for (var i = 0, child; child = children[i]; i++) { %>
-        <li><%= child.value %> <%= child.text %></li>
+        <li><%= child.value %> <%= jsd.replaceLinks(tag, child.text, __pageUrl) %></li>
 <% } %>
     </ul>
 <% } %>

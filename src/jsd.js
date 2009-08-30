@@ -89,6 +89,56 @@ JSD.prototype.print = function() {
     return this.output;
 }
 
+JSD.prototype.urlTo = function(tag, name, base) {
+    var fullname = name, hash = "";
+
+    var ns = this.allNamespaces.map[fullname];
+    if (!ns) {
+        if (!tag) return "";
+
+        fullname = tag.value + "." + name;
+        ns = this.allNamespaces.map[fullname];
+        if (!ns) {
+            fullname = tag.value.replace(/\.[^.]*$/, "") + "." + name;
+            ns = this.allNamespaces.map[fullname];
+            if (!ns)
+                return "";
+        }
+    }
+
+    // not a container -- last segment is hash
+    var container = false;
+    var names = JSD.allNamespacesModeler.namespaceTags;
+    for (var i = 0, name; name = names[i]; i++) {
+        var children = ns[Utl.pluralize(name)];
+        if (children) {
+            container = true;
+            break;
+        }
+    }
+    if (!container) {
+        hash = "#" + fullname.replace(/.*\./, "");
+        fullname = fullname.replace(/\.[^.]*$/, "");
+    }
+    
+    var url = fullname.replace(/\./, "/") + ".html" + hash;
+    return (base ? Utl.relUrl(base, url) : url);
+}
+
+JSD.prototype.linkTo = function(tag, name, base) {
+    var url = this.urlTo(tag, name, base);
+    if (!url) return name;
+
+    return ["<a href=\"", url, "\">", name, "</a>"].join("");
+}
+
+JSD.prototype.replaceLinks = function(tag, text, base) {
+    var m = this;
+    return text.replace(JSD.INNER_COMMENT, function(s, name, value, text) {
+        return (name == "link" ? m.linkTo(tag, value, base) : s);
+    });
+}
+
 /**
  * @class JSD.Tag
  * Represents a javadoc tag.

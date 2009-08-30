@@ -70,6 +70,21 @@ function testSafeBoolean() {
 }
 TestUtl.add("testSafeBoolean", testSafeBoolean);
 
+function testRelUrl() {
+    Utl.assertEquals("", Utl.relUrl(), "assert null relUrl");
+    Utl.assertEquals("", Utl.relUrl("", ""), "assert empty relUrl");
+    Utl.assertEquals("foo.html", Utl.relUrl("", "foo.html"), "assert simple file relUrl");
+    Utl.assertEquals("baz/bar/foo.html", Utl.relUrl("", "baz/bar/foo.html"), "assert simple path relUrl");
+    Utl.assertEquals("foo.html", Utl.relUrl("x", "foo.html"), "assert simple file relUrl 2");
+    Utl.assertEquals("baz/bar/foo.html", Utl.relUrl("x", "baz/bar/foo.html"), "assert simple path relUrl 2");
+    Utl.assertEquals("../../foo.html", Utl.relUrl("x/y/z.html", "foo.html"), "assert complex file relUrl");
+    Utl.assertEquals("../../baz/bar/foo.html", Utl.relUrl("x/y/z.html", "baz/bar/foo.html"), "assert complex path relUrl");
+    Utl.assertEquals("foo.html", Utl.relUrl("x/y/z.html", "x/y/foo.html"), "assert common relUrl");
+    Utl.assertEquals("y/foo.html", Utl.relUrl("x/y.html", "x/y/foo.html"), "assert common lower relUrl");
+    Utl.assertEquals("../foo.html", Utl.relUrl("x/y/z.html", "x/foo.html"), "assert common higher relUrl");
+}
+TestUtl.add("testRelUrl", testRelUrl);
+
 function testEquals() {
     Utl.assert(Utl.equals(), "assert undefined equals undefined");
     Utl.assert(Utl.equals(null), "assert null equals undefined");

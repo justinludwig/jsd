@@ -98,6 +98,29 @@ safeBoolean: function(x) {
 },
 
 /**
+ * @function {string} relUrl
+ * Creates a relative url to another file,
+ * given the path from the root to the current file.
+ * @param {string} base Path from root to the current file.
+ * @param {string} rel Path from root to the other file.
+ * @return Path from current file to the other file.
+ */
+relUrl: function(base, rel) {
+    // skip common root path
+    base = (base || "").split("/"), rel = (rel || "").split("/");
+    while (base.length && rel.length && base[0] == rel[0]) {
+        base.shift();
+        rel.shift();
+    }
+    
+    // walk up to root
+    for (var i = 1, l = base.length; i < l; i++)
+        rel.unshift("..");
+
+    return rel.join("/");
+},
+
+/**
  * @function {boolean} equals
  * Returns true if two objects are equal.
  * @param x First object.

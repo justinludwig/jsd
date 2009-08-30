@@ -5,7 +5,7 @@ if (!jsd.globals.empty)
     tags = [jsd.globals].concat(tags);
 
 for (var i = 0, tag; tag = tags[i]; i++) {
-    var file = tag.value.replace(/\./, "/") + ".html";
+    var file = jsd.urlTo(null, tag.value);
     
     %><%@ page fileVar="file" %><%
     header(tag.value);
