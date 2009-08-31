@@ -44,6 +44,28 @@ Utl.createDirectoryAndFileTypeFilter = function(type) {
     });
 }
 
+Utl.cleanDirectory = function(dir) {
+    // normalize dir path
+    dir = dir || ".";
+    if (!/\/$/.test(dir))
+        dir += "/";
+
+    var file = new java.io.File(dir);
+    Utl.deleteDirectory(file);
+}
+
+Utl.deleteDirectory = function(root, skipRoot) {
+    if (!root.exists())
+        return;
+
+    if (root.isDirectory())
+        for (var i = 0, file, files = root.listFiles(); file = files[i]; i++)
+            Utl.deleteDirectory(file);
+
+    if (!skipRoot)
+        root["delete"](); // delete is js keyword
+}
+
 Utl.writeToDirectory = function(dir, s) {
     // normalize dir path
     dir = dir || ".";
@@ -97,5 +119,6 @@ print("running...");
         template: Utl.readDirectories(tpl, Utl.createDirectoryAndFileTypeFilter(".jst")),
         modelers: JSD.modelers
     });
+    Utl.cleanDirectory(out);
     Utl.writeToDirectory(out, jsd.run());
 })(arguments);
