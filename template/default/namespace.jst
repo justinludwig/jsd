@@ -1,11 +1,11 @@
 <%
 // include globals: top-level non-containers
-var tags = jsd.allNamespaces.containers();
+var tags = jsd.allNamespaces.containers;
 if (!jsd.globals.empty)
     tags = [jsd.globals].concat(tags);
 
 for (var i = 0, tag; tag = tags[i]; i++) {
-    var file = jsd.urlTo(null, tag.value);
+    var file = jsd.urlTo(tag.value);
     
     %><%@ page fileVar="file" %><%
     header(tag.value);

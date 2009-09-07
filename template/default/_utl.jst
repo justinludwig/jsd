@@ -16,24 +16,29 @@
 <%@ end %>
 
 
-<%@ function name="paramsSummary" arguments="params" %>
-<% if (params) { %>
-<p class="params">(
-<% for (var i = 0, param; param = params[i]; i++) { %>
-    <% if (i > 0) { %>,<% } %>
-    <%= param.modifiers.join(" ") %> <em><%= param.value %></em>
-<% } %>
-)</p>
-<% } %>
+<%@ function name="paramsSummary" arguments="tag, params" %>
+<%
+params = params || tag.params;
+if (params) {
+    %><p class="params">(<%
+    for (var i = 0, param; param = params[i]; i++) {
+        if (i > 0) { %>,<% }
+        %><%= param.modifiers.join(" ") %> <em><%= param.value %></em><%
+    }
+    %>)</p><%
+}
+%>
 <%@ end %>
 
 
-<%@ function name="paramsDetail" arguments="params" %>
-<% if (params) { %>
+<%@ function name="paramsDetail" arguments="tag, params" %>
+<%
+params = params || tag.params;
+if (params) { %>
 <dl>
 <% for (var i = 0, param; param = params[i]; i++) { %>
     <dt><%= param.modifiers.join(" ") %> <em><%= param.value %></em></dt>
-    <dd><%= param.text %></dd>
+    <dd><%= jsd.replaceLinks(param.text, tag, __pageUrl) %></dd>
 <% } %>
 </dl>
 <% } %>
@@ -43,22 +48,23 @@
 <%@ function name="summary" arguments="tag" %>
 <%
 var localName = tag.value.replace(/.*\./, "");
+var url = (jsd.allNamespaces.isContainer(tag) ? jsd.urlTo(tag.value, tag, __pageUrl) : "") +  "#" + localName;
 %>
 
-<h3><%= tag.modifiers.join(" ") %> <%= tag.name %> <em><a href="#<%= localName %>"><%= localName %></a></em></h3>
+<h3><%= tag.modifiers.join(" ") %> <%= tag.name %> <em><a href="<%= url %>"><%= localName %></a></em></h3>
 
 <%
-paramsSummary(tag.params);
+paramsSummary(tag);
 
 for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
 %>
-    <h4><%= set.modifiers.join(" ") %> <%= set.name %> <em><a href="#<%= localName %>-<%= set.value %>"><%= set.value %></a></em></h4>
+    <h4><%= set.modifiers.join(" ") %> <%= set.name %> <em><a href="<%= url %>-<%= set.value %>"><%= set.value %></a></em></h4>
 <%
-    paramsSummary(set.params);
+    paramsSummary(set);
 }
 %>
 
-<p><%= jsd.replaceLinks(tag, Utl.firstSentence(tag.text, 100), __pageUrl) %></p>
+<p><%= jsd.replaceLinks(Utl.firstSentence(tag.text, 100), tag, __pageUrl) %></p>
 
 <%@ end %>
 
@@ -71,34 +77,34 @@ var localName = tag.value.replace(/.*\./, "");
 <h3 id="<%= localName %>"><%= tag.modifiers.join(" ") %> <%= tag.name %> <em><%= localName %></em></h3>
 
 <%
-paramsSummary(tag.params);
+paramsSummary(tag);
 
 for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
 %>
     <h4><%= tag.modifiers.join(" ") %> <%= tag.name %> <em><%= localName %></em></h4>
 <%
-    paramsSummary(set.params);
+    paramsSummary(set);
 }
 
 simpleAnnotationList(tag, "extends");
 simpleAnnotationList(tag, "implements");
 %>
 
-<p><%= jsd.replaceLinks(tag, tag.text, __pageUrl) %></p>
+<p><%= jsd.replaceLinks(tag.text, tag, __pageUrl) %></p>
 
 <%
 if (tag.params) {
 %>
     <h5 id="<%= localName %>-parameters">Parameters</h5>
 <%
-    paramsDetail(tag.params);
+    paramsDetail(tag);
 }
 
 for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
 %>
     <h5 id="<%= localName %>-<%= set.value %>"><%= set.modifiers.join(" ") %> <%= set.name %> <em><%= set.value %></em></h5>
 <%
-    paramsDetail(set.params);
+    paramsDetail(set);
 }
 
 simpleAnnotation(tag, "return");
@@ -133,7 +139,14 @@ if (children) {
 <%
 var plural = Utl.pluralize(name);
 var children = tag[plural];
-if (children) {
+
+// skip container children
+if (children)
+    for (var i = children.length - 1; i >= 0; i--)
+        if (jsd.allNamespaces.isContainer(children[i]))
+            children.splice(i, 1);
+
+if (children && children.length) {
     children = JSD.Tag.sortByValue(children.concat());
     var uppercase = plural.charAt(0).toUpperCase() + plural.substring(1);
 
@@ -155,7 +168,7 @@ if (children) {
 %>
     <h5 id="<%= localName %>-<%= name %>"><%= title %></h5>
 <% for (var i = 0, child; child = children[i]; i++) { %>
-    <p><%= child.value %> <%= jsd.replaceLinks(tag, child.text, __pageUrl) %></p>
+    <p><%= child.value %> <%= jsd.replaceLinks(child.text, tag, __pageUrl) %></p>
 <% }
 } %>
 <%@ end %>
@@ -172,7 +185,7 @@ if (children) {
     <h5 id="<%= localName %>-<%= name %>"><%= title %></h5>
     <ul>
 <% for (var i = 0, child; child = children[i]; i++) { %>
-        <li><%= child.value %> <%= jsd.replaceLinks(tag, child.text, __pageUrl) %></li>
+        <li><%= child.value %> <%= jsd.replaceLinks(child.text, tag, __pageUrl) %></li>
 <% } %>
     </ul>
 <% } %>

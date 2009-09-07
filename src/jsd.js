@@ -31,13 +31,22 @@ JSD.prototype.parse = function(s) {
     this.input = s || this.input || "";
     this.tags = this.tags || [];
 
-    for (var re = /\/\*\*([^\v]+?)\*\//g, a; a = re.exec(this.input);) {
+    for (var re = /\/\*\*([^\v]+?)\*\/([^\v]*?)(?=\/\*\*|$)/g, a; a = re.exec(this.input);) {
         var comment = a[1];
         // strip leading and trailing asterixes
         comment = comment.replace(/^\*+|\*+$/g, "");
         // strip line-starting asterixes
         comment = comment.replace(/\s*\*+\s*/g, " ");
-        this.parseComment(comment);
+
+        var context = a[2] || "";
+        // strip c-style comments
+        context = context.replace(/\/\/.*/g, "");
+        // strip c++-style comments
+        context = context.replace(/\/\*([^\/]*?)\*\//g, "");
+        // strip leading and trailing whitespace
+        context = context.replace(/^\s*|\s*$/g, "");
+
+        this.parseComment(comment, context);
     }
     
     //Utl.log(Utl.dump(this.tags));
@@ -54,7 +63,7 @@ JSD.prototype.parseInnerComment = function(s) {
     return inner;
 }
 
-JSD.prototype.parseComment = function(s) {
+JSD.prototype.parseComment = function(s, context) {
     s = s || "";
 
     // temporarily remove inner tags (ie {@link Foo})
@@ -68,11 +77,12 @@ JSD.prototype.parseComment = function(s) {
         var value = a[4];
         var text1 = Utl.trim(a[5]);
 
-        // combine leading and following text
+        // combine leading and following text, adding back inner tags
         var text = Utl.trim(text0 + " " + text1).replace(/\{#/g, "{@");
-        var inner = this.parseInnerComment(text);
 
-        this.tags.push(new JSD.Tag(name, value, text, modifiers, inner));
+        this.tags.push(new JSD.Tag(name, value, text, modifiers, context));
+        // context applies only to first tag
+        context = "";
     }
 }
 
@@ -89,53 +99,55 @@ JSD.prototype.print = function() {
     return this.output;
 }
 
-JSD.prototype.urlTo = function(tag, name, base) {
-    var fullname = name, hash = "";
+JSD.prototype.urlTo = function(name, tag, base) {
+    if (!name) return "";
+    name = name.replace(/#/g, ".");
 
-    var ns = this.allNamespaces.map[fullname];
+    // find tag this name represents
+    var ns = this.allNamespaces.map[name];
     if (!ns) {
         if (!tag) return "";
+        var prefix = tag.value;
 
-        fullname = tag.value + "." + name;
-        ns = this.allNamespaces.map[fullname];
-        if (!ns) {
-            fullname = tag.value.replace(/\.[^.]*$/, "") + "." + name;
-            ns = this.allNamespaces.map[fullname];
-            if (!ns)
+        // calculate name if name is relative to tag
+        while (true) {
+            var prefixedName = prefix + "." + name;
+            ns = this.allNamespaces.map[prefixedName];
+            if (ns)
+                break;
+
+            // try next tag ancestor
+            prefix = prefix.replace(/\.?[^.]*$/, "");
+            if (!prefix)
                 return "";
         }
+        name = prefixedName;
     }
 
-    // not a container -- last segment is hash
-    var container = false;
-    var names = JSD.allNamespacesModeler.namespaceTags;
-    for (var i = 0, name; name = names[i]; i++) {
-        var children = ns[Utl.pluralize(name)];
-        if (children) {
-            container = true;
-            break;
-        }
-    }
-    if (!container) {
-        hash = "#" + fullname.replace(/.*\./, "");
-        fullname = fullname.replace(/\.[^.]*$/, "");
+    // if not a container, url is to parent document + hash
+    var hash = "";
+    if (!this.allNamespaces.isContainer(name)) {
+        hash = "#" + name.replace(/.*\./, "");
+        name = name.replace(/\.[^.]*$/, "");
     }
     
-    var url = fullname.replace(/\./, "/") + ".html" + hash;
+    var url = name.replace(/\./, "/") + ".html" + hash;
     return (base ? Utl.relUrl(base, url) : url);
 }
 
-JSD.prototype.linkTo = function(tag, name, base) {
-    var url = this.urlTo(tag, name, base);
-    if (!url) return name;
+JSD.prototype.linkTo = function(name, tag, base) {
+    var url = this.urlTo(name, tag, base);
+    if (!url) return name || "";
 
     return ["<a href=\"", url, "\">", name, "</a>"].join("");
 }
 
-JSD.prototype.replaceLinks = function(tag, text, base) {
+JSD.prototype.replaceLinks = function(text, tag, base) {
+    if (!text) return "";
     var m = this;
+
     return text.replace(JSD.INNER_COMMENT, function(s, name, value, text) {
-        return (name == "link" ? m.linkTo(tag, value, base) : s);
+        return (name == "link" ? m.linkTo(value, tag, base) : s);
     });
 }
 
@@ -143,12 +155,12 @@ JSD.prototype.replaceLinks = function(tag, text, base) {
  * @class JSD.Tag
  * Represents a javadoc tag.
  */
-JSD.Tag = function(name, value, text, modifiers, inner) {
+JSD.Tag = function(name, value, text, modifiers, context) {
     this.name = (name || "").toLowerCase();
     this.value = value || "";
     this.text = text || "";
     this.modifiers = modifiers || [];
-    this.inner = inner || [];
+    this.context = context || "";
     return this;
 }
 
@@ -319,12 +331,13 @@ JSD.allNamespacesModeler = function() {
         }
 
     // create allNamespaces property
-    this.allNamespaces = {
-        sort: JSD.allNamespacesModeler.sort,
-        top: JSD.allNamespacesModeler.top,
-        containers: JSD.allNamespacesModeler.containers,
+    var all = this.allNamespaces = {
+        isContainer: JSD.allNamespacesModeler.isContainer,
         map: map
     };
+    all.sorted = JSD.allNamespacesModeler.sort.call(all);
+    all.top = JSD.allNamespacesModeler.top.call(all);
+    all.containers = JSD.allNamespacesModeler.containers.call(all);
 }
 
 JSD.allNamespacesModeler.sort = function(jsd) {
@@ -372,9 +385,24 @@ JSD.allNamespacesModeler.containers = function(jsd) {
     return JSD.Tag.sortByValue(list);
 }
 
+JSD.allNamespacesModeler.isContainer = function(name) {
+    if (!name) return false;
+
+    // if passed tag
+    if (name.name)
+        return this.containers.indexOf(name) != -1;
+
+    // if passed name
+    for (var i = 0, tag; tag = this.containers[i]; i++)
+        if (tag.value == name)
+            return true;
+
+    return false;
+}
+
 JSD.globalsModeler = function() {
-    var top = this.allNamespaces.top();
-    var containers = this.allNamespaces.containers();
+    var top = this.allNamespaces;
+    var containers = this.allNamespaces;
     var globals = this.globals = JSD.globalsModeler.tag;
 
     // allow output to skip globals if empty
@@ -445,66 +473,5 @@ JSD.descriptionModeler = function() {
         // remove description tags
         delete tag.descriptions;
     }
-}
-
-/**
- * @function linkModeler
- * Modeler which replaces inline link tags with an actual link.
- */
-JSD.linkModeler = function() {
-    var fn = JSD.linkModeler.createLink;
-    if (!fn) return;
-                
-    // replace inner tag using linkFunction if tag is "link"
-    var m = this;
-    function replacement(comment, name, value, text) {
-        return (name == "link" ? fn.call(m, tag, comment, value) : comment);
-    }
-
-    // search for tags with one or more inner "link" tags
-    // and run replacement fn on text
-    for (var i = 0, tag, tags = this.tags; tag = tags[i]; i++)
-        for (var j = 0, t, tt = tag.inner; t = tt[j]; j++)
-            if (t.name == "link") {
-                tag.text = tag.text.replace(JSD.INNER_COMMENT, replacement);
-                break;
-            }
-}
-
-/**
- * @function {string} createLink
- * Creates the anchor tag for the specified link.
- * @param {JSD.Tag} tag Tag containing the link.
- * @param {string} comment Original inner comment (ex "{@link Foo.Foo2#two}").
- * @param {string} link Link (ex "Foo.Foo2#two").
- * @return Anchor tag or empty string ("").
- */
-JSD.linkModeler.createLink = function(tag, comment, link) {
-    var url = JSD.linkModeler.calculateUrl.call(this, tag, link);
-    if (!url) return comment;
-
-    return ["<a href='", url, "'>", link, "</a>"].join("");
-}
-
-/**
- * @function {string} calculateUrl
- * Calculates the url for the specified link.
- * @param {JSD.Tag} tag Tag containing the link.
- * @param {string} link Link (ex "Foo.Foo2#two").
- * @return Link url or empty string ("").
- */
-JSD.linkModeler.calculateUrl = function(tag, link) {
-    var a = /([^#(]*)(#[^(]*)?/.exec(link);
-    if (!a) return "";
-
-    var cls = a[1];
-    var fn = a[2] || "";
-    if (!cls) return fn;
-
-    for (var i = 0, space, spaces = this.allNamespaces; space = spaces[i]; i++)
-        if (cls == space.value)
-            return cls.replace(/\./g, "/") + ".html" + fn;
-
-    return "";
 }
 

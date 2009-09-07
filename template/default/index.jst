@@ -3,14 +3,14 @@
 header("Namespaces");
 
 // include globals: top-level non-containers
-var tags = jsd.allNamespaces.containers();
+var tags = jsd.allNamespaces.containers;
 if (!jsd.globals.empty)
     tags = [jsd.globals].concat(tags);
 
 for (var i = 0, tag; tag = tags[i]; i++) {
 %>
-    <h3><%= jsd.linkTo(null, tag.value) %></h3>
-    <p><%= Utl.firstSentence(tag.text, 100) %></p>
+    <h3><%= jsd.linkTo(tag.value) %></h3>
+    <p><%= jsd.replaceLinks(Utl.firstSentence(tag.text, 100), tag, __pageUrl) %></p>
 <%
 }
 
