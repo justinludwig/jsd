@@ -178,18 +178,27 @@ log: function(msg, level, cat) {
  * @function {string} dump
  * Dumps out specified object.
  * @param o Object to dump.
- * @param {int} tabs Tab depth.
+ * @param {optional int} tabs Tab depth.
+ * @param {optional object[]} circle Array to use to break circular references.
  * @return Dumped object.
  */
-dump: function(o, tabs) {
+dump: function(o, tabs, circle) {
     tabs = tabs || 0;
+    circle = circle || [];
+
+    // break circular references
+    if (circle.indexOf(o) != -1)
+        return "[circular reference]";
+    circle.push(o);
     
+    // print simple value
     if (o == null || (typeof o != "function" && typeof o != "object"))
         return String(o);
 
     var a = [];
     function tab() { for (var i = 0; i < tabs; i++) a.push("\t"); }
 
+    // print object with properties
     a.push("{");
     tabs++;
     for (var i in o) {
@@ -197,7 +206,7 @@ dump: function(o, tabs) {
         tab();
         a.push(i);
         a.push(": ");
-        a.push(Utl.dump(o[i], tabs));
+        a.push(Utl.dump(o[i], tabs, circle));
     }
     a.push("\n");
     tabs--;

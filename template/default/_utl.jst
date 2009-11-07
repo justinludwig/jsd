@@ -2,7 +2,10 @@
 <%@ function name="header" arguments="title, fullTitle" %>
 <html>
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=8">
 <title><%=title%></title>
+<link rel="stylesheet" type="text/css" href="<%= Utl.relUrl(__pageUrl, "style.css") %>">
 </head>
 <body>
 
@@ -23,7 +26,7 @@ if (params) {
     %><p class="params">(<%
     for (var i = 0, param; param = params[i]; i++) {
         if (i > 0) { %>,<% }
-        %><%= param.modifiers.join(" ") %> <em><%= param.value %></em><%
+        %><%= modifiers(param) %> <em><%= param.value %></em><%
     }
     %>)</p><%
 }
@@ -37,7 +40,7 @@ params = params || tag.params;
 if (params) { %>
 <dl>
 <% for (var i = 0, param; param = params[i]; i++) { %>
-    <dt><%= param.modifiers.join(" ") %> <em><%= param.value %></em></dt>
+    <dt><%= modifiers(param) %> <em><%= param.value %></em></dt>
     <dd><%= jsd.replaceLinks(param.text, tag, __pageUrl) %></dd>
 <% } %>
 </dl>
@@ -48,17 +51,17 @@ if (params) { %>
 <%@ function name="summary" arguments="tag" %>
 <%
 var localName = tag.value.replace(/.*\./, "");
-var url = (jsd.allNamespaces.isContainer(tag) ? jsd.urlTo(tag.value, tag, __pageUrl) : "") +  "#" + localName;
+var url = (jsd.ns.isContainer(tag) ? jsd.urlTo(tag.value, tag, __pageUrl) : "") +  "#" + localName;
 %>
 
-<h3><%= tag.modifiers.join(" ") %> <%= tag.name %> <em><a href="<%= url %>"><%= localName %></a></em></h3>
+<h4><%= modifiers(tag) %> <%= tag.name %> <em><a href="<%= url %>"><%= localName %></a></em></h4>
 
 <%
 paramsSummary(tag);
 
 for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
 %>
-    <h4><%= set.modifiers.join(" ") %> <%= set.name %> <em><a href="<%= url %>-<%= set.value %>"><%= set.value %></a></em></h4>
+    <h5><%= modifiers(tag) %> <%= set.name %> <em><a href="<%= url %>-<%= set.value %>"><%= set.value %></a></em></h5>
 <%
     paramsSummary(set);
 }
@@ -74,14 +77,14 @@ for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
 var localName = tag.value.replace(/.*\./, "");
 %>
 
-<h3 id="<%= localName %>"><%= tag.modifiers.join(" ") %> <%= tag.name %> <em><%= localName %></em></h3>
+<h4 id="<%= localName %>"><%= modifiers(tag) %> <%= tag.name %> <em><%= localName %></em></h4>
 
 <%
 paramsSummary(tag);
 
 for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
 %>
-    <h4><%= tag.modifiers.join(" ") %> <%= tag.name %> <em><%= localName %></em></h4>
+    <h5><%= modifiers(tag) %> <%= tag.name %> <em><%= localName %></em></h5>
 <%
     paramsSummary(set);
 }
@@ -102,7 +105,7 @@ if (tag.params) {
 
 for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
 %>
-    <h5 id="<%= localName %>-<%= set.value %>"><%= set.modifiers.join(" ") %> <%= set.name %> <em><%= set.value %></em></h5>
+    <h5 id="<%= localName %>-<%= set.value %>"><%= modifiers(set) %> <%= set.name %> <em><%= set.value %></em></h5>
 <%
     paramsDetail(set);
 }
@@ -127,7 +130,7 @@ if (children) {
     children = JSD.Tag.sortByValue(children.concat());
     var uppercase = plural.charAt(0).toUpperCase() + plural.substring(1);
     
-    %><h2 id="<%= plural %>-summary"><%= uppercase %> Summary</h2><%
+    %><h3 id="<%= plural %>-summary"><%= uppercase %></h3><%
     for (var i = 0, child; child = children[i]; i++)
         summary(child);
 }
@@ -143,14 +146,14 @@ var children = tag[plural];
 // skip container children
 if (children)
     for (var i = children.length - 1; i >= 0; i--)
-        if (jsd.allNamespaces.isContainer(children[i]))
+        if (jsd.ns.isContainer(children[i]))
             children.splice(i, 1);
 
 if (children && children.length) {
     children = JSD.Tag.sortByValue(children.concat());
     var uppercase = plural.charAt(0).toUpperCase() + plural.substring(1);
 
-    %><h2 id="<%= plural %>"><%= uppercase %></h2><%
+    %><h3 id="<%= plural %>"><%= uppercase %></h3><%
     for (var i = 0, child; child = children[i]; i++)
         detail(child);
 }
@@ -168,7 +171,7 @@ if (children) {
 %>
     <h5 id="<%= localName %>-<%= name %>"><%= title %></h5>
 <% for (var i = 0, child; child = children[i]; i++) { %>
-    <p><%= child.value %> <%= jsd.replaceLinks(child.text, tag, __pageUrl) %></p>
+    <p><%= jsd.linkTo(child.value, tag, __pageUrl) %> <%= jsd.replaceLinks(child.text, tag, __pageUrl) %></p>
 <% }
 } %>
 <%@ end %>
@@ -185,9 +188,17 @@ if (children) {
     <h5 id="<%= localName %>-<%= name %>"><%= title %></h5>
     <ul>
 <% for (var i = 0, child; child = children[i]; i++) { %>
-        <li><%= child.value %> <%= jsd.replaceLinks(child.text, tag, __pageUrl) %></li>
+        <li><%= jsd.linkTo(child.value, tag, __pageUrl) %> <%= jsd.replaceLinks(child.text, tag, __pageUrl) %></li>
 <% } %>
     </ul>
 <% } %>
 <%@ end %>
 
+
+<%@ function name="modifiers" arguments="tag" %>
+<%
+return Utl.map(tag.modifiers, function(x) {
+    return jsd.linkTo(x, tag, __pageUrl);
+}).join(" ");
+%>
+<%@ end %>

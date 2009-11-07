@@ -1,15 +1,13 @@
 <%
-// include globals: top-level non-containers
-var tags = jsd.allNamespaces.containers;
-if (!jsd.globals.empty)
-    tags = [jsd.globals].concat(tags);
-
+var tags = jsd.ns.containers;
 for (var i = 0, tag; tag = tags[i]; i++) {
     var file = jsd.urlTo(tag.value);
     
     %><%@ page fileVar="file" %><%
     header(tag.value);
     detail(tag);
+
+    %><h2 id="summary">Summary</h2><%
 
     childrenSummary(tag, "namespace");
     childrenSummary(tag, "interface");
@@ -20,6 +18,8 @@ for (var i = 0, tag; tag = tags[i]; i++) {
     childrenSummary(tag, "event");
     childrenSummary(tag, "struct");
     childrenSummary(tag, "property");
+
+    %><h2 id="details">Details</h2><%
 
     childrenDetail(tag, "namespace");
     childrenDetail(tag, "interface");

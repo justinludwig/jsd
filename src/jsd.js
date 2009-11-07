@@ -104,7 +104,7 @@ JSD.prototype.urlTo = function(name, tag, base) {
     name = name.replace(/#/g, ".");
 
     // find tag this name represents
-    var ns = this.allNamespaces.map[name];
+    var ns = this.ns.map[name];
     if (!ns) {
         if (!tag) return "";
         var prefix = tag.value;
@@ -112,7 +112,7 @@ JSD.prototype.urlTo = function(name, tag, base) {
         // calculate name if name is relative to tag
         while (true) {
             var prefixedName = prefix + "." + name;
-            ns = this.allNamespaces.map[prefixedName];
+            ns = this.ns.map[prefixedName];
             if (ns)
                 break;
 
@@ -126,7 +126,7 @@ JSD.prototype.urlTo = function(name, tag, base) {
 
     // if not a container, url is to parent document + hash
     var hash = "";
-    if (!this.allNamespaces.isContainer(name)) {
+    if (!this.ns.isContainer(name)) {
         hash = "#" + name.replace(/.*\./, "");
         name = name.replace(/\.[^.]*$/, "");
     }
@@ -265,8 +265,8 @@ JSD.endNamespaceModeler = function() {
     }
 }
 
-JSD.allNamespacesModeler = function() {
-    var names = JSD.allNamespacesModeler.namespaceTags;
+JSD.nsModeler = function() {
+    var names = JSD.nsModeler.namespaceTags;
     if (!names) return;
 
     var nameslength = names.length;
@@ -330,29 +330,25 @@ JSD.allNamespacesModeler = function() {
                             children[k] = merged;
         }
 
-    // create allNamespaces property
-    var all = this.allNamespaces = {
-        isContainer: JSD.allNamespacesModeler.isContainer,
+    // create ns property
+    this.ns = {
         map: map
     };
-    all.sorted = JSD.allNamespacesModeler.sort.call(all);
-    all.top = JSD.allNamespacesModeler.top.call(all);
-    all.containers = JSD.allNamespacesModeler.containers.call(all);
 }
 
-JSD.allNamespacesModeler.sort = function(jsd) {
-    var map = jsd ? jsd.allNamespaces.map : this.map;
+JSD.nsModeler.sortedModeler = function(jsd) {
+    var map = this.ns.map;
 
     // create list of all namespaces
     var list = [];
     for (var i in map)
         list.push(map[i]);
         
-    return JSD.Tag.sortByValue(list);
+    this.ns.sorted = JSD.Tag.sortByValue(list);
 }
 
-JSD.allNamespacesModeler.top = function(jsd) {
-    var map = jsd ? jsd.allNamespaces.map : this.map;
+JSD.nsModeler.topModeler = function() {
+    var map = this.ns.map;
 
     // create list of top-level namespaces
     var list = [];
@@ -362,12 +358,12 @@ JSD.allNamespacesModeler.top = function(jsd) {
             list.push(tag);
     }
         
-    return JSD.Tag.sortByValue(list);
+    this.ns.top = JSD.Tag.sortByValue(list);
 }
 
-JSD.allNamespacesModeler.containers = function(jsd) {
-    var map = jsd ? jsd.allNamespaces.map : this.map;
-    var names = JSD.allNamespacesModeler.namespaceTags;
+JSD.nsModeler.containersModeler = function(jsd) {
+    var map = this.ns.map;
+    var names = JSD.nsModeler.namespaceTags;
 
     // create list of namespaces with child namespaces
     var list = [];
@@ -382,10 +378,11 @@ JSD.allNamespacesModeler.containers = function(jsd) {
         }
     }
         
-    return JSD.Tag.sortByValue(list);
+    this.ns.containers = JSD.Tag.sortByValue(list);
+    this.ns.isContainer = JSD.nsModeler.isContainer;
 }
 
-JSD.allNamespacesModeler.isContainer = function(name) {
+JSD.nsModeler.isContainer = function(name) {
     if (!name) return false;
 
     // if passed tag
@@ -400,10 +397,38 @@ JSD.allNamespacesModeler.isContainer = function(name) {
     return false;
 }
 
-JSD.globalsModeler = function() {
-    var top = this.allNamespaces;
-    var containers = this.allNamespaces;
-    var globals = this.globals = JSD.globalsModeler.tag;
+/**
+ * @function disjointNamespacesModeler
+ * Modeler which connects parents to children based on namespaces
+ * (ex adds Foo.Bar as child of Foo).
+ */
+JSD.nsModeler.disjointModeler = function() {
+    var tags = this.tags;
+    var map = this.ns.map;
+
+    for (var i = 0, tag; tag = tags[i]; i++) {
+        // calc parent name by stripping last segment from tag value
+        var prefix = tag.value.replace(/\.?[^.]*$/, "");
+        var parent = map[prefix];
+        if (!parent) continue;
+
+        // attach child to parent
+        var plural = Utl.pluralize(tag.name);
+        var children = parent[plural];
+        if (children) {
+            // check if parent already contains child
+            if (children.indexOf(tag) == -1)
+                children.push(tag);
+        } else {
+            parent[plural] = [tag];
+        }
+    }
+}
+
+JSD.nsModeler.globalsModeler = function() {
+    var top = this.ns.top;
+    var containers = this.ns.containers;
+    var globals = this.ns.globals = JSD.nsModeler.globalsModeler.tag;
 
     // allow output to skip globals if empty
     globals.empty = true;
@@ -421,6 +446,13 @@ JSD.globalsModeler = function() {
             // clear empty flag
             globals.empty = false;
         }
+
+    // add "globals" tag to ns data
+    if (!globals.empty) {
+        top.unshift(globals);
+        containers.unshift(globals);
+        this.ns.map[globals.value] = globals;
+    }
 }
 
 /**

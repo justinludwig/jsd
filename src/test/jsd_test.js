@@ -51,16 +51,16 @@ function testReplaceLinks() {
     bar.classes = [ baz, baz2 ];
 
     var jsd = new JSD();
-    jsd.allNamespaces = {
-        isContainer: JSD.allNamespacesModeler.isContainer,
+    jsd.ns = {
+        isContainer: JSD.nsModeler.isContainer,
         containers: [ foo, bar ],
         map: {}
     };
     for (var i = 0, ns, nss = [ foo, foo2, bar, bar2, baz, baz2 ]; ns = nss[i]; i++)
-        jsd.allNamespaces.map[ns.value] = ns;
+        jsd.ns.map[ns.value] = ns;
 
-    var oldNamespaceTags = JSD.allNamespacesModeler.namespaceTags;
-    JSD.allNamespacesModeler.namespaceTags = [ "class" ];
+    var oldNamespaceTags = JSD.nsModeler.namespaceTags;
+    JSD.nsModeler.namespaceTags = [ "class" ];
 
     Utl.assertEquals("", jsd.urlTo(), "test url to null");
     Utl.assertEquals("", jsd.urlTo(""), "test url to empty");
@@ -105,7 +105,7 @@ function testReplaceLinks() {
         jsd.replaceLinks("My {@link Foo} for {@link Bar}."),
     "test replace links");
 
-    JSD.allNamespacesModeler.namespaceTags = oldNamespaceTags;
+    JSD.nsModeler.namespaceTags = oldNamespaceTags;
 }
 TestParse.add("testReplaceLinks", testReplaceLinks);
 

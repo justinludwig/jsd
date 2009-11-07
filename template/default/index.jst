@@ -2,11 +2,7 @@
 <%
 header("Namespaces");
 
-// include globals: top-level non-containers
-var tags = jsd.allNamespaces.containers;
-if (!jsd.globals.empty)
-    tags = [jsd.globals].concat(tags);
-
+var tags = jsd.ns.containers;
 for (var i = 0, tag; tag = tags[i]; i++) {
 %>
     <h3><%= jsd.linkTo(tag.value) %></h3>
