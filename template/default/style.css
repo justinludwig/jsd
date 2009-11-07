@@ -1,6 +1,6 @@
-<%@ page file="style.css" %>
 
 /*** CSS reset ***/
+
 
 * {
     font-family: sans-serif;
@@ -40,15 +40,12 @@ h3 {
     background-color: #cef;
 }
 h4 {
-    display: inline;
     font-size: 1.1em;
 }
 h5 {
-    display: inline;
     font-size: 0.85em;
 }
 h6 {
-    display: inline;
     font-size: 0.7em;
 }
 
@@ -160,7 +157,35 @@ small {
 
 /*** template styles ***/
 
+.summary, .detail {
+    margin: 0.5em 0;
+    overflow: hidden;
+}
+.summary + .summary, .detail + .detail {
+    border-top: 1px solid gray;
+    margin-top: 1em;
+    padding-top: 1em;
+}
+.summary p {
+    margin-bottom: 0;
+}
 
-.params {
+.params *, .annotation * {
     display: inline;
 }
+.annotation ul {
+    display: block;
+}
+.annotation li {
+    display: list-item;
+}
+.extends ul, .implements ul {
+    display: inline;
+}
+.extends li, .implements li {
+    display: inline;
+}
+.extends li + li:before, .implements li + li:before {
+    content: ", ";
+}
+

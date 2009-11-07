@@ -6,6 +6,8 @@ load("src/utl.js");
 load("src/jsd.js");
 load("src/jst.js");
 
+/** @namespace Utl */
+
 Utl.readDirectory = function(file, filter, header, footer, charset) {
     if (!file.exists()) return "";
 
@@ -36,10 +38,26 @@ Utl.readDirectories = function(files, filter, header, footer, charset) {
     return a.join("");
 }
 
-Utl.createDirectoryAndFileTypeFilter = function(type) {
+/**
+ * @function {java.io.FileFilter} createDirectoryAndFileTypeFilter
+ * Creates a FileFilter that accepts direcories, and files ending with the specified extension.
+ * @param {string} type Space-delimited list of extensions (ie ".js .css .html").
+ * @param {optional boolean} reject True to reject the specified types instead of accepting it.
+ * @return Filter which accepts directories and accepts/rejects the specified file types.
+ */
+Utl.createDirectoryAndFileTypeFilter = function(type, reject) {
+    if (type.constructor == String)
+        type = type.split(/\s/);
+
     return new java.io.FileFilter({
         accept: function(file) {
-            return (file.isDirectory() || file.getName().endsWith(type));
+            if (!reject && file.isDirectory()) return true;
+
+            for (var i = 0, l = type.length; i < l; i++)
+                if (file.getName().endsWith(type[i]))
+                    return !reject;
+
+            return !!reject;
         }
     });
 }
@@ -64,6 +82,59 @@ Utl.deleteDirectory = function(root, skipRoot) {
 
     if (!skipRoot)
         root["delete"](); // delete is js keyword
+}
+
+/**
+ * @function copyDirectories
+ * Creates a (recursive) copy of the first directory/file at the second location.
+ * @param {java.io.File} src Directory to copy.
+ * @param {java.io.File} dst Location of copy to create.
+ * @param {optional java.io.FileFilter} filter Filter to restrict files to copy.
+ */
+Utl.copyDirectories = function(src, dst, filter) {
+    // allow array of src directories
+    if (src.constructor == Array) {
+        for (var i = 0, l = src.length; i < l; i++)
+            Utl.copyDirectories(src[i], dst, filter);
+        return;
+    }
+
+    // coerce src to file
+    if (src.constructor == String)
+        src = new java.io.File(src);
+    if (!src.exists()) return;
+
+    // coerce dst to file
+    if (dst.constructor == String)
+        dst = new java.io.File(dst);
+
+    // copy directory recursively
+    if (src.isDirectory()) {
+        dst.mkdirs();
+
+        var files = filter ? src.listFiles(filter) : src.listFiles();
+        for (var i = 0; i < files.length; i++)
+            Utl.copyDirectories(files[i], new java.io.File(dst, files[i].getName()), filter);
+        return;
+    }
+
+    // copy file content
+    var buf = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 0x400);
+    try {
+        var input = new java.io.FileInputStream(src);
+        var out = new java.io.FileOutputStream(dst);
+
+        var len = input.read(buf);
+        while (len != -1) {
+            out.write(buf, 0, len);
+            len = input.read(buf);
+        }
+
+    // clean up
+    } finally {
+        if (input) input.close();
+        if (out) out.close();
+    }
 }
 
 Utl.writeToDirectory = function(dir, s) {
@@ -115,10 +186,16 @@ print("running...");
         tpl = tpl.split(/\s/);
 
     var jsd = new JSD.TemplateDriven({
-        input: Utl.readDirectories(src, Utl.createDirectoryAndFileTypeFilter(".js"), "\n/** @file {path} */\n", "\n/** @end */\n"),
-        template: Utl.readDirectories(tpl, Utl.createDirectoryAndFileTypeFilter(".jst")),
+        input: Utl.readDirectories(src, Utl.createDirectoryAndFileTypeFilter(JSD.srcType || ".js"), "\n/** @file {path} */\n", "\n/** @end */\n"),
+        template: Utl.readDirectories(tpl, Utl.createDirectoryAndFileTypeFilter(JSD.templateType || ".jst")),
         modelers: JSD.modelers
     });
+
+    // wipe output directory
     Utl.cleanDirectory(out);
+    // run jsd
     Utl.writeToDirectory(out, jsd.run());
+    // copy non-template files (.css, .gif, etc) to output directory
+    Utl.copyDirectories(tpl, out, Utl.createDirectoryAndFileTypeFilter((JSD.templateType || ".jst") + " " + (JSD.ignoreType || ""), true));
+
 })(arguments);

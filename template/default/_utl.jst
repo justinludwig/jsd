@@ -1,204 +1,290 @@
+<%
 
-<%@ function name="header" arguments="title, fullTitle" %>
+/**
+ * @function header Prints page header.
+ * @param {string} title Page title.
+ * @param {optional string} fullTitle Full version of title.
+ */
+function header(title, fullTitle) {
+%>
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=8">
 <title><%=title%></title>
-<link rel="stylesheet" type="text/css" href="<%= Utl.relUrl(__pageUrl, "style.css") %>">
+<link rel="stylesheet" type="text/css" href="<%= relUrl("style.css") %>">
 </head>
 <body>
 
 <h1><%=fullTitle || title%></h1>
-<%@ end %>
+<%
+}
 
 
-<%@ function name="footer" %>
+/**
+ * @function footer Prints page footer.
+ */
+function footer() {
+%>
 </body>
 </html>
-<%@ end %>
-
-
-<%@ function name="paramsSummary" arguments="tag, params" %>
 <%
-params = params || tag.params;
-if (params) {
-    %><p class="params">(<%
-    for (var i = 0, param; param = params[i]; i++) {
-        if (i > 0) { %>,<% }
-        %><%= modifiers(param) %> <em><%= param.value %></em><%
-    }
-    %>)</p><%
 }
+
+
+/**
+ * @function paramsSummary Prints consise list of params.
+ * @param {JSD.Tag} tag Params parent.
+ * @param {optional JSD.Tag[]} params Params (defaults to <code>tag.params</code>).
+ */
+function paramsSummary(tag, params) {
+    params = params || tag.params;
+    if (params) {
+        %><p>(<%
+        for (var i = 0, param; param = params[i]; i++) {
+            if (i > 0) { %>,<% }
+            %><%= modifiers(param) %> <em><%= param.value %></em><%
+        }
+        %>)</p><%
+    }
+}
+
+
+/**
+ * @function paramsDetail Prints extended list of params, with detailed info for each param.
+ * @param {JSD.Tag} tag Params parent.
+ * @param {optional JSD.Tag[]} params Params (defaults to <code>tag.params</code>).
+ */
+function paramsDetail(tag, params) {
+    params = params || tag.params;
+    if (params) {
 %>
-<%@ end %>
-
-
-<%@ function name="paramsDetail" arguments="tag, params" %>
-<%
-params = params || tag.params;
-if (params) { %>
 <dl>
-<% for (var i = 0, param; param = params[i]; i++) { %>
+<%
+        for (var i = 0, param; param = params[i]; i++) {
+%>
     <dt><%= modifiers(param) %> <em><%= param.value %></em></dt>
     <dd><%= jsd.replaceLinks(param.text, tag, __pageUrl) %></dd>
-<% } %>
+<%
+        }
+%>
 </dl>
-<% } %>
-<%@ end %>
-
-
-<%@ function name="summary" arguments="tag" %>
 <%
-var localName = tag.value.replace(/.*\./, "");
-var url = (jsd.ns.isContainer(tag) ? jsd.urlTo(tag.value, tag, __pageUrl) : "") +  "#" + localName;
+    }
+}
+
+
+/**
+ * @function summary Prints tag summary.
+ * @param {JSD.Tag} tag Tag to print.
+ */
+function summary(tag) {
+    var localName = tag.value.replace(/.*\./, "");
+    var url = (jsd.ns.isContainer(tag) ? jsd.urlTo(tag.value, tag, __pageUrl) : "") +  "#" + localName;
 %>
 
-<h4><%= modifiers(tag) %> <%= tag.name %> <em><a href="<%= url %>"><%= localName %></a></em></h4>
-
+<div class="summary <%= tag.name %>">
+<div class="params">
+<h4><%= modifiers(tag) %> <em><a href="<%= url %>"><%= localName %></a></em></h4>
 <%
-paramsSummary(tag);
-
-for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
+    paramsSummary(tag);
 %>
+</div>
+<%
+
+    for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
+%>
+    <div class="paramset">
     <h5><%= modifiers(tag) %> <%= set.name %> <em><a href="<%= url %>-<%= set.value %>"><%= set.value %></a></em></h5>
 <%
-    paramsSummary(set);
-}
+        paramsSummary(set);
 %>
-
+    </div>
+<%
+    }
+%>
 <p><%= jsd.replaceLinks(Utl.firstSentence(tag.text, 100), tag, __pageUrl) %></p>
-
-<%@ end %>
-
-
-<%@ function name="detail" arguments="tag" %>
-<%
-var localName = tag.value.replace(/.*\./, "");
-%>
-
-<h4 id="<%= localName %>"><%= modifiers(tag) %> <%= tag.name %> <em><%= localName %></em></h4>
+</div>
 
 <%
-paramsSummary(tag);
+}
 
-for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
+
+/**
+ * @function detail Prints tag detail.
+ * @param {JSD.Tag} tag Tag to print.
+ */
+function detail(tag) {
+    var localName = tag.value.replace(/.*\./, "");
 %>
+
+<div class="detail <%= tag.name %>">
+<div class="params">
+<h4 id="<%= localName %>"><%= modifiers(tag) %> <em><%= localName %></em></h4>
+<%
+    paramsSummary(tag);
+%>
+</div>
+<%
+
+    for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
+%>
+    <div class="paramset">
     <h5><%= modifiers(tag) %> <%= tag.name %> <em><%= localName %></em></h5>
 <%
-    paramsSummary(set);
-}
-
-simpleAnnotationList(tag, "extends");
-simpleAnnotationList(tag, "implements");
+        paramsSummary(set);
 %>
+    </div>
+<%
+    }
 
+    simpleAnnotationList(tag, "extends");
+    simpleAnnotationList(tag, "implements");
+
+%>
 <p><%= jsd.replaceLinks(tag.text, tag, __pageUrl) %></p>
+<%
+    if (tag.params) {
+%>
+<h5 id="<%= localName %>-parameters">Parameters</h5>
+<%
+        paramsDetail(tag);
+    }
+
+    for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
+%>
+<h5 id="<%= localName %>-<%= set.value %>"><%= modifiers(set) %> <%= set.name %> <em><%= set.value %></em></h5>
+<%
+        paramsDetail(set);
+    }
+
+    simpleAnnotation(tag, "return");
+    simpleAnnotationList(tag, "throws");
+    simpleAnnotation(tag, "deprecated");
+    simpleAnnotation(tag, "since");
+    simpleAnnotationList(tag, "see");
+    simpleAnnotationList(tag, "author");
+    simpleAnnotation(tag, "version");
+    simpleAnnotation(tag, "timestamp");
+%>
+</div>
 
 <%
-if (tag.params) {
-%>
-    <h5 id="<%= localName %>-parameters">Parameters</h5>
-<%
-    paramsDetail(tag);
 }
 
-for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
-%>
-    <h5 id="<%= localName %>-<%= set.value %>"><%= modifiers(set) %> <%= set.name %> <em><%= set.value %></em></h5>
-<%
-    paramsDetail(set);
+
+/**
+ * @function childrenSummary Prints a consice summmary of each child of a specified type for a tag.
+ * @param {JSD.Tag} tag Tag whose children to print.
+ * @param {string} name Type of children to print (ie "function", "class", etc).
+ */
+function childrenSummary(tag, name) {
+    var plural = Utl.pluralize(name);
+    var children = tag[plural];
+    if (children) {
+        children = JSD.Tag.sortByValue(children.concat());
+        var uppercase = plural.charAt(0).toUpperCase() + plural.substring(1);
+        
+        %><h3 id="<%= plural %>-summary"><%= uppercase %></h3><%
+        for (var i = 0, child; child = children[i]; i++)
+            summary(child);
+    }
 }
 
-simpleAnnotation(tag, "return");
-simpleAnnotation(tag, "throws");
-simpleAnnotation(tag, "deprecated");
-simpleAnnotation(tag, "since");
-simpleAnnotationList(tag, "see");
-simpleAnnotationList(tag, "author");
-simpleAnnotation(tag, "version");
-simpleAnnotation(tag, "timestamp");
-%>
-<%@ end %>
 
+/**
+ * @function childrenSummary Prints the extended detail of each child of a specified type for a tag.
+ * @param {JSD.Tag} tag Tag whose children to print.
+ * @param {string} name Type of children to print (ie "function", "class", etc).
+ */
+function childrenDetail(tag, name) {
+    var plural = Utl.pluralize(name);
+    var children = tag[plural];
 
-<%@ function name="childrenSummary" arguments="tag, name" %>
-<%
-var plural = Utl.pluralize(name);
-var children = tag[plural];
-if (children) {
-    children = JSD.Tag.sortByValue(children.concat());
-    var uppercase = plural.charAt(0).toUpperCase() + plural.substring(1);
-    
-    %><h3 id="<%= plural %>-summary"><%= uppercase %></h3><%
-    for (var i = 0, child; child = children[i]; i++)
-        summary(child);
+    // skip container children
+    if (children)
+        for (var i = children.length - 1; i >= 0; i--)
+            if (jsd.ns.isContainer(children[i]))
+                children.splice(i, 1);
+
+    if (children && children.length) {
+        children = JSD.Tag.sortByValue(children.concat());
+        var uppercase = plural.charAt(0).toUpperCase() + plural.substring(1);
+
+        %><h3 id="<%= plural %>"><%= uppercase %></h3><%
+        for (var i = 0, child; child = children[i]; i++)
+            detail(child);
+    }
 }
+
+
+/**
+ * @function simpleAnnotation Prints the detail of each child of a specified "annotation" type for a tag
+ * (such as for child types like "return", "deprecated", "since", etc.).
+ * @param {JSD.Tag} tag Tag whose children to print.
+ * @param {string} name Type of children to print (ie "return", "deprecated", etc).
+ * @param {optional string} title Title of anotation (defaults to name of child type).
+ */
+function simpleAnnotation(tag, name, title) {
+    var plural = Utl.pluralize(name);
+    var children = tag[plural];
+    if (children) {
+        title = title || name.charAt(0).toUpperCase() + name.substring(1);
+        var localName = tag.value.replace(/.*\./, "");
 %>
-<%@ end %>
-
-
-<%@ function name="childrenDetail" arguments="tag, name" %>
+<div class="annotation <%= name %>">
+<h5 id="<%= localName %>-<%= name %>"><%= title %></h5>
 <%
-var plural = Utl.pluralize(name);
-var children = tag[plural];
 
-// skip container children
-if (children)
-    for (var i = children.length - 1; i >= 0; i--)
-        if (jsd.ns.isContainer(children[i]))
-            children.splice(i, 1);
-
-if (children && children.length) {
-    children = JSD.Tag.sortByValue(children.concat());
-    var uppercase = plural.charAt(0).toUpperCase() + plural.substring(1);
-
-    %><h3 id="<%= plural %>"><%= uppercase %></h3><%
-    for (var i = 0, child; child = children[i]; i++)
-        detail(child);
+        for (var i = 0, child; child = children[i]; i++) {
+%>
+<p><%= jsd.linkTo(child.value, tag, __pageUrl) %> <%= jsd.replaceLinks(child.text, tag, __pageUrl) %></p>
+</div>
+<%
+        }
+    }
 }
+
+/**
+ * @function simpleAnnotationList Prints the detail of each child of a specified "annotation" type for a tag
+ * (such as for child types like "extends", "author", "see", etc.), as a list.
+ * @param {JSD.Tag} tag Tag whose children to print.
+ * @param {string} name Type of children to print (ie "return", "deprecated", etc).
+ * @param {optional string} title Title of anotation (defaults to name of child type).
+ */
+function simpleAnnotationList(tag, name, title) {
+    var plural = Utl.pluralize(name);
+    var children = tag[plural];
+    if (children) {
+        title = title || name.charAt(0).toUpperCase() + name.substring(1);
+        var localName = tag.value.replace(/.*\./, "");
 %>
-<%@ end %>
-
-
-<%@ function name="simpleAnnotation" arguments="tag, name, title" %>
+<div class="annotation <%= name %>">
+<h5 id="<%= localName %>-<%= name %>"><%= title %></h5>
+<ul>
 <%
-var plural = Utl.pluralize(name);
-var children = tag[plural];
-if (children) {
-    title = title || name.charAt(0).toUpperCase() + name.substring(1);
-    var localName = tag.value.replace(/.*\./, "");
+        for (var i = 0, child; child = children[i]; i++) {
 %>
-    <h5 id="<%= localName %>-<%= name %>"><%= title %></h5>
-<% for (var i = 0, child; child = children[i]; i++) { %>
-    <p><%= jsd.linkTo(child.value, tag, __pageUrl) %> <%= jsd.replaceLinks(child.text, tag, __pageUrl) %></p>
-<% }
-} %>
-<%@ end %>
-
-
-<%@ function name="simpleAnnotationList" arguments="tag, name, title" %>
+<li><%= jsd.linkTo(child.value, tag, __pageUrl) %> <%= jsd.replaceLinks(child.text, tag, __pageUrl) %></li>
 <%
-var plural = Utl.pluralize(name);
-var children = tag[plural];
-if (children) {
-    title = title || name.charAt(0).toUpperCase() + name.substring(1);
-    var localName = tag.value.replace(/.*\./, "");
+        }
 %>
-    <h5 id="<%= localName %>-<%= name %>"><%= title %></h5>
-    <ul>
-<% for (var i = 0, child; child = children[i]; i++) { %>
-        <li><%= jsd.linkTo(child.value, tag, __pageUrl) %> <%= jsd.replaceLinks(child.text, tag, __pageUrl) %></li>
-<% } %>
-    </ul>
-<% } %>
-<%@ end %>
-
-
-<%@ function name="modifiers" arguments="tag" %>
+</ul>
+</div>
 <%
-return Utl.map(tag.modifiers, function(x) {
-    return jsd.linkTo(x, tag, __pageUrl);
-}).join(" ");
+    }
+}
+
+
+/**
+ * @function {string} modifiers Returns the modifiers for the specified tag.
+ * @param {JSD.Tag} tag Tag to print.
+ * @return Modifiers for the specified tag, linked if possible.
+ */
+function modifiers(tag) {
+    return Utl.map(tag.modifiers, function(x) {
+        return jsd.linkTo(x, tag, __pageUrl);
+    }).join(" ");
+}
+
 %>
-<%@ end %>
