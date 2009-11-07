@@ -1,11 +1,16 @@
 <%@ page file="index.html" %>
 <%
-header("Namespaces");
+header("Index");
+detail(jsd.project);
+%>
 
+<h2>Namespaces</h2>
+
+<%
 var tags = jsd.ns.containers;
 for (var i = 0, tag; tag = tags[i]; i++) {
 %>
-    <h3><%= jsd.linkTo(tag.value) %></h3>
+    <h4><%= tag.name %> <%= jsd.linkTo(tag.value) %></h4>
     <p><%= jsd.replaceLinks(Utl.firstSentence(tag.text, 100), tag, __pageUrl) %></p>
 <%
 }

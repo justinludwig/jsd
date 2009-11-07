@@ -3,6 +3,15 @@
  */
 
 /**
+ * @project Foo The foo project.
+ * This project provides an simple example
+ * of tagging javascript code for jsd.
+ * @author Alice Foo
+ * @author Bob Bar
+ * @version 4.1.1.2a
+ */
+
+/**
  * @class Foo The Foo class.
  * @constructor Foo Creates a new Foo.
  * @param {Bar} bar Bar with which to create new foo.

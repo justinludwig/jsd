@@ -11,12 +11,16 @@ function header(title, fullTitle) {
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=8">
-<title><%=title%></title>
+<title><%= title %> - <%= jsd.project.value %></title>
 <link rel="stylesheet" type="text/css" href="<%= relUrl("style.css") %>">
 </head>
 <body>
 
-<h1><%=fullTitle || title%></h1>
+<div class="header">
+<h5><%= jsd.project.value %></h5>
+</div>
+
+<h1><%= fullTitle || title %></h1>
 <%
 }
 
@@ -42,7 +46,7 @@ function paramsSummary(tag, params) {
     if (params) {
         %><p>(<%
         for (var i = 0, param; param = params[i]; i++) {
-            if (i > 0) { %>,<% }
+            if (i > 0) { %>, <% }
             %><%= modifiers(param) %> <em><%= param.value %></em><%
         }
         %>)</p><%
@@ -95,7 +99,7 @@ function summary(tag) {
     for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
 %>
     <div class="paramset">
-    <h5><%= modifiers(tag) %> <%= set.name %> <em><a href="<%= url %>-<%= set.value %>"><%= set.value %></a></em></h5>
+    <h5><em><a href="<%= url %>-<%= set.value %>"><%= localName %></a></em></h5>
 <%
         paramsSummary(set);
 %>
@@ -130,7 +134,7 @@ function detail(tag) {
     for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
 %>
     <div class="paramset">
-    <h5><%= modifiers(tag) %> <%= tag.name %> <em><%= localName %></em></h5>
+    <h5><em><%= localName %></em></h5>
 <%
         paramsSummary(set);
 %>
@@ -140,6 +144,8 @@ function detail(tag) {
 
     simpleAnnotationList(tag, "extends");
     simpleAnnotationList(tag, "implements");
+    simpleAnnotationList(tag, "extendedBy");
+    simpleAnnotationList(tag, "implementedBy");
 
 %>
 <p><%= jsd.replaceLinks(tag.text, tag, __pageUrl) %></p>
@@ -153,7 +159,7 @@ function detail(tag) {
 
     for (var i = 0, set, sets = tag.paramsets || []; set = sets[i]; i++) {
 %>
-<h5 id="<%= localName %>-<%= set.value %>"><%= modifiers(set) %> <%= set.name %> <em><%= set.value %></em></h5>
+<h5 id="<%= localName %>-<%= set.value %>"><%= modifiers(set) %> <%= set.name %> <em><%= set.value %></em> <%= jsd.replaceLinks(set.text, set, __pageUrl) %></h5>
 <%
         paramsDetail(set);
     }

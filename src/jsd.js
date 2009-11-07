@@ -164,6 +164,11 @@ JSD.Tag = function(name, value, text, modifiers, context) {
     return this;
 }
 
+/**
+ * @function {JSD.Tag[]} sortByValue Sorts the specified list of tags.
+ * @param {JSD.Tag[]} list List of tags to sort.
+ * @return List of sorted tags.
+ */
 JSD.Tag.sortByValue = function(list) {
     list.sort(function(x, y) {
         var xvalue = x.value || "", yvalue = y.value || "";
@@ -173,6 +178,8 @@ JSD.Tag.sortByValue = function(list) {
     });
     return list;
 }
+
+/** @end JSD.Tag */
 
 /**
  * @class JSD.TemplateDriven
@@ -319,16 +326,30 @@ JSD.nsModeler = function() {
             remap.push({ original: tag, merged: merged });
     }
 
-    // remap from multi-tags to merged tag
+    // merge remapped tags in the specified tags list
+    function merge(tags) {
+        if (!tags) return;
+        for (var i = 0, tag, inTags = []; tag = tags[i]; i++)
+            for (var m = 0, remapped; remapped = remap[m]; m++)
+                if (remapped.original == tag) {
+                    // replace first original with merged
+                    if (inTags.indexOf(remapped.merged) == -1) {
+                        inTags.push(remapped.merged);
+                        tags[i] = remapped.merged;
+                    // remove other originials
+                    } else {
+                        tags.splice(i--, 1);
+                    }
+                }
+    }
+
+    // remap global tags list from multi-tags to merged tag
+    merge(tags);
+
+    // remap each tag's child lists from multi-tags to merged tag
     for (var i = 0, tag; tag = tags[i]; i++)
-        for (var j = 0; j < nameslength; j++) {
-            var children = tag[Utl.pluralize(names[j])];
-            if (children)
-                for (var k = 0, child; child = children[k]; k++)
-                    for (var m = 0, remapped; remapped = remap[m]; m++)
-                        if (remapped == child)
-                            children[k] = merged;
-        }
+        for (var j = 0; j < nameslength; j++)
+            merge(tag[Utl.pluralize(names[j])]);
 
     // create ns property
     this.ns = {
@@ -403,10 +424,16 @@ JSD.nsModeler.isContainer = function(name) {
  * (ex adds Foo.Bar as child of Foo).
  */
 JSD.nsModeler.disjointModeler = function() {
+    var names = JSD.nsModeler.namespaceTags;
+    if (!names) return;
+
     var tags = this.tags;
     var map = this.ns.map;
 
     for (var i = 0, tag; tag = tags[i]; i++) {
+        // skip non-namespace tags
+        if (names.indexOf(tag.name) == -1) continue;
+
         // calc parent name by stripping last segment from tag value
         var prefix = tag.value.replace(/\.?[^.]*$/, "");
         var parent = map[prefix];
@@ -453,6 +480,86 @@ JSD.nsModeler.globalsModeler = function() {
         containers.unshift(globals);
         this.ns.map[globals.value] = globals;
     }
+}
+
+/**
+ * @function projectModeler
+ * Modeler which merges multiple project declarations
+ * and the default project ({@link JSD.defaultProject})
+ * into the <code>project</code> property of the main jsd object.
+ */
+JSD.projectModeler = function() {
+    this.project = Utl.merge((this.projects || []).concat(JSD.projectModeler.tag));
+}
+
+// object hierarchy
+JSD.ohModeler = function() {
+    var relations = JSD.ohModeler.relations;
+    if (!relations) return;
+
+    var map = this.ns.map;
+    var graph = {};
+
+    // adds tag (and optionally other tag) to graph
+    // @param {JSD.Tag} tag This tag.
+    // @param {optional JSD.Tag} other Other tag.
+    // @param {optional boolean} True if tag is parent of other.
+    function add(tag, other, parent) {
+        var t = graph[tag.value];
+        if (!t)
+            t = graph[tag.value] = { sup: {}, sub: {} };
+
+        if (!other) return t;
+
+        var o = graph[other.value];
+        if (!o)
+            o = graph[other.value] = { sup: {}, sub: {} };
+
+        t[parent ? "sub" : "sup"][other.value] = o;
+        o[parent ? "sup" : "sub"][tag.value] = t;
+        return t;
+    }
+
+    // checks if tag already has specified relation with other tag,
+    // and if it doesn't, sets up the relation
+    // @param {JSD.Tag} tag This tag.
+    // @param t Graph entry for this tag (returned by add()).
+    // @param {string} relation Tag's relation to other tags ("extends").
+    // @param {string} reverse Reverse of relation ("extendedBy").
+    // @param {boolean} True if relation is child -> parent (true for "extends", false for "extendedBy").
+    function check(tag, t, relation, reverse, parent) {
+        var rels = tag[Utl.pluralize(relation)];
+        if (rels)
+            for (var k = 0, rel; rel = rels[k]; k++) {
+                var other = map[rel.value];
+                if (other && !(t[parent ? "sub" : "sup"][rel.value])) {
+                    // add reverse to other tag
+                    Utl.addToArrayProperty(other, reverse, new JSD.Tag(reverse, tag.value, rel.text), true);
+                    // add to oh list
+                    add(tag, other, parent);
+                }
+            }
+    }
+
+    for (var i in map) {
+        // add item to object-hierarchy graph
+        var tag = map[i];
+        var t = add(tag);
+
+        for (var j in relations) {
+            var relation = j;
+            var reverse = relations[j];
+
+            // check child -> parent relations (borrows, extends)
+            check(tag, t, relation, reverse, false);
+            // check parent -> child relations (lends, extendedBy)
+            check(tag, t, reverse, relation, true);
+        }
+    }
+    
+    this.oh = {
+        graph: graph
+    };
 }
 
 /**
