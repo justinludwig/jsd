@@ -178,7 +178,7 @@ print("running...");
     var src = (args.pop() || "").split(/\s/);
 
     args = Utl.mapArgs(args);
-    var conf = args.c || args.conf || args.config || "conf/default.conf";
+    var conf = args.c || args.conf || args.config || "conf/default.conf.js";
     load(conf);
 
     var tpl = JSD.template;
