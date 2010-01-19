@@ -70,12 +70,6 @@ JST.prototype.wrap = function(s, args) {
         }
     a.push("){\nvar __m=this,__a=[];\n");
     a.push("function out(x){__a.push(String(x));}\n");
-    a.push("function hout(x){out(Utl.escapeHTML(x));}\n");
-    a.push("function jout(x){out(Utl.escapeJS(x));}\n");
-    a.push("function uout(x){out(Utl.escapeURI(x));}\n");
-    a.push("function sout(x){out(Utl.safeURIScheme(x));}\n");
-    a.push("function nout(x){out(Utl.safeNumber(x));}\n");
-    a.push("function bout(x){out(Utl.safeBoolean(x));}\n");
     a.push("var __pageUrl='';\n");
     a.push("function relUrl(x){return Utl.relUrl(__pageUrl,x);}\n");
     a.push(s || "");
