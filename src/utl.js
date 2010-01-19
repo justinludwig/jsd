@@ -331,7 +331,7 @@ mapArgs: function(a) {
     var m = {};
     for (var i = 0; i < a.length; i++)
         if (/^-+/.test(a[i]))
-            m[a[i].replace(/^-+/, "")] = (!/^-+/.test(a[i+r1i]) ? a[i+1] : "");
+            m[a[i].replace(/^-+/, "")] = (!/^-+/.test(a[i+1]) ? a[i+1] : "");
     return m;
 },
 

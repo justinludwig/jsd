@@ -1,15 +1,18 @@
 #!/bin/sh
 
 JSD_HOME=`dirname $0`/..
-SRC=$1
-OUT=$2
+OUT=$1
 
-if [ -z "$SRC" ]; then
-    SRC="$JSD_HOME/src"
-fi
 if [ -z "$OUT" ]; then
-    OUT="$JSD_HOME/doc/api"
+    OUT="$JSD_HOME/doc"
 fi
 
+# generate docs from src dir
+java -cp "$JSD_HOME/lib/js.jar" org.mozilla.javascript.tools.shell.Main "$JSD_HOME/src/rhino.js" "$JSD_HOME/src" "$OUT/api"
 
-java -cp "$JSD_HOME/lib/js.jar" org.mozilla.javascript.tools.shell.Main "$JSD_HOME/src/rhino.js" "$SRC" "$OUT"
+# generate docs from template dir
+TEMPLATES="$JSD_HOME/template"
+for TEMPLATE in `ls "$TEMPLATES"`; do
+    java -cp "$JSD_HOME/lib/js.jar" org.mozilla.javascript.tools.shell.Main "$JSD_HOME/src/rhino.js" -e "JSD.srcType='.jst';" "$TEMPLATES/$TEMPLATE" "$OUT/template/$TEMPLATE"
+done
+

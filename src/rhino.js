@@ -174,17 +174,26 @@ Utl.writeFile = function(file, s) {
 print("running...");
 
 (function(args) {
+    // src and out are the very last two args
     var out = (args.pop() || "");
     var src = (args.pop() || "").split(/\s/);
 
     args = Utl.mapArgs(args);
+    // check other args for "-c" or "--conf" etc
     var conf = args.c || args.conf || args.config || "conf/default.conf.js";
     load(conf);
 
+    // check other args for "-e" or "--eval" etc
+    var literal = args.e || args.eval;
+    if (literal)
+        eval(literal);
+
+    // find template directory (make it into an array of template dirs)
     var tpl = JSD.template;
     if (tpl.constructor == String)
         tpl = tpl.split(/\s/);
 
+    // init the template-driven jsd instance
     var jsd = new JSD.TemplateDriven({
         input: Utl.readDirectories(src, Utl.createDirectoryAndFileTypeFilter(JSD.srcType || ".js"), "\n/** @file {path} */\n", "\n/** @end */\n"),
         template: Utl.readDirectories(tpl, Utl.createDirectoryAndFileTypeFilter(JSD.templateType || ".jst")),
