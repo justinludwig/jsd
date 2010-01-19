@@ -88,17 +88,16 @@ JST.prototype.parse = function(s) {
     var directors = this.directors || JST.directors;
     var a = [], lastIndex = 0, type = "";
     // parse <%x %> tags
-    for (var re = /(?:^|%>)([^\v]*?)(?:<%([hjusnb]?[@!=])?|$)/g, r; r = re.exec(s);) {
+    for (var re = /(?:^|%>)([^\v]*?)(?:<%([@!=])?|$)/g, r; r = re.exec(s);) {
         // tag content
         var js = Utl.trim(s.substring(lastIndex, r.index));
 
         // handle tag end
         switch (type) {
             case "@": a.push(this.parseDirective(js)); break;
+            case "=": a.push(js); a.push(");"); break;
             default: a.push(js); break;
         }
-        if (/=$/.test(type))
-            a.push(");");
 
         // print literal content (outside of tags)
         a.push("\nout(\"");
@@ -111,12 +110,8 @@ JST.prototype.parse = function(s) {
         type = r[2] || "";
 
         // handle tag start
-        if (/=$/.test(type)) {
-            // convert <%h=%> into hout(), etc
-            if (!/^=/.test(type))
-                a.push(type.charAt(0));
+        if (type == "=")
             a.push("out(");
-        }
     }
 
     this.code = a.join("");
