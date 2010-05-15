@@ -8,9 +8,9 @@ if [ -z "$OUT" ]; then
 fi
 
 # generate docs from src dir
-java -cp "$JSD_HOME/lib/js.jar" org.mozilla.javascript.tools.shell.Main "$JSD_HOME/src/rhino.js" "$JSD_HOME/src" "$OUT/api"
+java -cp "$JSD_HOME/lib/js.jar" org.mozilla.javascript.tools.shell.Main "$JSD_HOME/src/rhino.js" "$JSD_HOME/src $JSD_HOME/conf" "$OUT/api"
 
-# generate docs from template dir
+# generate docs for each template in templates dir
 TEMPLATES="$JSD_HOME/template"
 for TEMPLATE in `ls "$TEMPLATES"`; do
     java -cp "$JSD_HOME/lib/js.jar" org.mozilla.javascript.tools.shell.Main "$JSD_HOME/src/rhino.js" -e "JSD.srcType='.jst';" "$TEMPLATES/$TEMPLATE" "$OUT/template/$TEMPLATE"

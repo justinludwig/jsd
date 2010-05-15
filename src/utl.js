@@ -1,9 +1,31 @@
+/*
+Copyright (c) 2010 Justin Ludwig
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 /**
- * @file utl.js Generic utilites.
+ * @file utl.js Generic utilities.
  */
 
 /**
- * @namespace Utl
+ * @namespace Utl Generic utilities.
  */
 var Utl = {
 
@@ -149,11 +171,9 @@ equals: function(x, y) {
 
     // recurse into complex object
     function recurse(a, b) {
-        for (var i in a) {
-            //Utl.log("equals " + i + ": " + a[i] + "=" + b[i]);
+        for (var i in a)
             if (!Utl.equals(a[i], b[i]))
                 return false;
-        }
         return true;
     }
     return recurse(x, y) && recurse(y, x);
@@ -217,7 +237,7 @@ dump: function(o, tabs, circle) {
 },
 
 /**
- * @function map
+ * @function {object[]} map
  * Applies specified function to each element in specified array,
  * returning the corresponding results in a new array.
  * @param a Array over which to iterate.
@@ -263,8 +283,15 @@ propertyValues: function(o) {
 },
 
 /**
- * @function merge
+ * @function {object} merge
  * Merges the objects in the specified array into a new object.
+ * The main purpose of this function is to merge duplicate tag objects
+ * into a single tag. The properties of all the specified objects
+ * are copied into a new object (with a shallow copy). Where more than one
+ * object has the same property, if the property values are strings,
+ * the strings are concatenated; if the property values are arrays,
+ * the elements in the arrays are appended to a new array; and otherwise,
+ * the first non-null property-value is used.
  * @param {object[]} a Array of objects to merge.
  * @return New merged object.
  */
@@ -336,7 +363,7 @@ mapArgs: function(a) {
 },
 
 /**
- * @function {string[string]) splitIntoFiles
+ * @function {string[string]} splitIntoFiles
  * Splits string marked with file delimiters
  * into map of file names to file content.
  * @param {string} s String to split.
@@ -398,7 +425,7 @@ firstSentence: function(s, max) {
 
 /**
  * @function assert
- * Throws an error if the specfied value is falsey.
+ * Throws an error if the specified value is falsey.
  * @param {boolean} expr Value to test.
  * @param {optional string} msg Message to display if falsey.
  */
@@ -413,8 +440,8 @@ assert: function(expr, msg) {
 /**
  * @function assertEquals
  * Throws an error if two objects are not equal.
- * @param x First object .
- * @param y Second object .
+ * @param x First object.
+ * @param y Second object.
  * @param {optional string} msg Message to display if not equal.
  */
 assertEquals: function(x, y, msg) {
@@ -425,14 +452,27 @@ assertEquals: function(x, y, msg) {
     Utl.log(Utl.dump(y), "DEBUG", "assert");
     throw new Error(msg);
 }
+
 } /** @end Utl */
 
 /**
  * @class Utl.TestSuite
  * A group of tests.
  * Each test is either a function or another TestSuite.
+ * Use it like this:
+ * <pre><code>
+<i>// create the test suite</i>
+var MyTestSuite = new Utl.TestSuite();
+<i>// add some tests to the suite</i>
+MyTestSuite.add("testBasicAddition", function() {
+    Util.assertEquals(2, 1 + 1, "test one plus one");
+    Util.assertEquals(4, 2 + 2, "test two plus two");
+});
+<i>// run the suite</i>
+MyTestSuite.run();
+ * </code></pre>
  */
-Utl.TestSuite = function(name) {
+Utl.TestSuite = function() {
     this.tests = {};
     return this;
 }
@@ -463,6 +503,7 @@ Utl.TestSuite.prototype.run = function() {
 /** @scope */
 
 /**
- * @var {Utl.TestSuite} TestAll All tests.
+ * @var {Utl.TestSuite} Utl.TestAll All JSD tests.
+ * Running this test runs all JSD tests.
  */
 Utl.TestAll = new Utl.TestSuite();

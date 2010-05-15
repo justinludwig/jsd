@@ -1,10 +1,39 @@
+/*
+Copyright (c) 2010 Justin Ludwig
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 /**
  * @file jsd.sh Main jsd code.
+ *
+ * @project JSD A javascript documentation tool.
+ * @version 0.1
  */
 
 /**
  * @class JSD
  * Main jsd class.
+ *
+ * @constructor JSD
+ * @param {optional} o Optional config properties
+ * (properties are copied to this instance).
  */
 function JSD(o) {
     // copy properties from o
@@ -16,8 +45,15 @@ function JSD(o) {
 }
 
 /**
+ * @property {string} input The input text (code to document).
+ * @property {string} output The output text (the resulting documentation).
+ * @property {JSD.Tag[]} tags Array of parsed documentation tags.
+ * @property {function[]} modelers Array of modeling functions.
+ */
+
+/**
  * @function {string} run
- * Runs jsd.
+ * Runs this JSD instance.
  * @param {string} s Input text.
  * @return Output text.
  */
@@ -27,15 +63,21 @@ JSD.prototype.run = function(s) {
     return this.print();
 }
 
+/**
+ * @function {JSD.Tag[]} parse
+ * Parses the specified string into an array of tags.
+ * @param {string} s Input text.
+ * @return Tags parsed in order.
+ */
 JSD.prototype.parse = function(s) {
     this.input = s || this.input || "";
     this.tags = this.tags || [];
 
     for (var re = /\/\*\*([^\v]+?)\*\/([^\v]*?)(?=\/\*\*|$)/g, a; a = re.exec(this.input);) {
         var comment = a[1];
-        // strip leading and trailing asterixes
+        // strip leading and trailing asterisks
         comment = comment.replace(/^\*+|\*+$/g, "");
-        // strip line-starting asterixes
+        // strip line-starting asterisks
         comment = comment.replace(/\s*\*+\s*/g, " ");
 
         var context = a[2] || "";
@@ -53,9 +95,20 @@ JSD.prototype.parse = function(s) {
     return this.tags;
 }
 
+/**
+ * @var {static regexp} INNER_COMMENT
+ * Regexp used to parse special inner tags
+ * (like &#x7b;&#x40;link Foo&#x7d;).
+ */
 JSD.INNER_COMMENT = /\{@([^\s}]+)\s*([^\s}]*)([^}]*)}/g;
 
-// parse special inner tags (ie {@link Foo})
+/**
+ * @function {JSD.Tag[]} parseInnerComment
+ * Parses special inner tags (like &#x7b;&#x40;link Foo&#x7d;)
+ * out of other comment text.
+ * @param s Comment text
+ * @return Array of inner tags.
+ */
 JSD.prototype.parseInnerComment = function(s) {
     var inner = [];
     for (var re = JSD.INNER_COMMENT, a; a = re.exec(s);)
@@ -63,6 +116,14 @@ JSD.prototype.parseInnerComment = function(s) {
     return inner;
 }
 
+/**
+ * @function parseComment
+ * Parses the specified comment text for tags,
+ * adding each tag to this instance's {@link #tags} array.
+ * @param s Comment text.
+ * @param context Non-comment text following the content
+ * (which may help modelers annotate the parsed tags).
+ */
 JSD.prototype.parseComment = function(s, context) {
     s = s || "";
 
@@ -86,6 +147,13 @@ JSD.prototype.parseComment = function(s, context) {
     }
 }
 
+/**
+ * @function {JSD} model Runs modeler functions in order.
+ * Modeler functions are called against this JSD instance,
+ * and are passed this JSD instance as their single argument.
+ * @param {function[]} modelers Modeler functions.
+ * @return This instance.
+ */
 JSD.prototype.model = function(modelers) {
     this.modelers = modelers || this.modelers || [];
     for (var i = 0, m; m = this.modelers[i]; i++) {
@@ -94,11 +162,24 @@ JSD.prototype.model = function(modelers) {
     return this;
 }
 
+/**
+ * @function {string} print Prints the output of this instance.
+ * @return The output of this instance.
+ */
 JSD.prototype.print = function() {
     this.output = Utl.dump(this);
     return this.output;
 }
 
+/**
+ * @function {string} urlTo
+ * Uses info from {@link nsModeler} to create the relative URL
+ * to the specified name.
+ * @param {string} name Name for which to create the URL.
+ * @param {optional JSD.Tag} tag Current tag.
+ * @param {optional string} base Base URL.
+ * @return URL to specified name or "".
+ */
 JSD.prototype.urlTo = function(name, tag, base) {
     if (!name) return "";
     name = name.replace(/#/g, ".");
@@ -135,6 +216,15 @@ JSD.prototype.urlTo = function(name, tag, base) {
     return (base ? Utl.relUrl(base, url) : url);
 }
 
+/**
+ * @function {string} linkTo
+ * Uses info from {@link nsModeler} to create the relative html link
+ * to the specified name.
+ * @param {string} name Name for which to create the link.
+ * @param {optional JSD.Tag} tag Current tag.
+ * @param {optional string} base Base URL.
+ * @return HTML link to specified name or "".
+ */
 JSD.prototype.linkTo = function(name, tag, base) {
     var url = this.urlTo(name, tag, base);
     if (!url) return name || "";
@@ -142,6 +232,15 @@ JSD.prototype.linkTo = function(name, tag, base) {
     return ["<a href=\"", url, "\">", name, "</a>"].join("");
 }
 
+/**
+ * @function {string} replaceLinks
+ * Uses info from {@link nsModeler} to replace inner link tags
+ * (ie &#x7b;&#x40;link Foo&#x7d;) with links to the names they reference.
+ * @param {string} name Name for which to create the link.
+ * @param {optional JSD.Tag} tag Current tag.
+ * @param {optional string} base Base URL.
+ * @return HTML link to specified name or "".
+ */
 JSD.prototype.replaceLinks = function(text, tag, base) {
     if (!text) return "";
     var m = this;
@@ -154,6 +253,13 @@ JSD.prototype.replaceLinks = function(text, tag, base) {
 /**
  * @class JSD.Tag
  * Represents a javadoc tag.
+ *
+ * @constructor JSD.Tag
+ * @param {optional string} name Tag name.
+ * @param {optional string} value Tag value.
+ * @param {optional string} text Additional tag text.
+ * @param {optional string[]} modifiers Tag modifiers.
+ * @param {optional string} context Tag context.
  */
 JSD.Tag = function(name, value, text, modifiers, context) {
     this.name = (name || "").toLowerCase();
@@ -165,7 +271,14 @@ JSD.Tag = function(name, value, text, modifiers, context) {
 }
 
 /**
- * @function {JSD.Tag[]} sortByValue Sorts the specified list of tags.
+ * @property {string} name Tag name (ie "class" or "param").
+ * @property {string} value Tag value (may be "", not null).
+ * @property {string} text Additional tag text (may be "", not null).
+ * @property {string[]} modifiers Tag modifiers (ie "private" or "optional"; may be empty, not null).
+ * @property {string} context Non-tag text following tag (ie code following comment; may be "", not null).
+
+/**
+ * @function {static JSD.Tag[]} sortByValue Sorts the specified list of tags.
  * @param {JSD.Tag[]} list List of tags to sort.
  * @return List of sorted tags.
  */
@@ -183,7 +296,11 @@ JSD.Tag.sortByValue = function(list) {
 
 /**
  * @class JSD.TemplateDriven
- * Template-driven class jsd.
+ * Template-driven JSD class.
+ * @extends JSD
+ *
+ * @constructor JSD.TemplateDriven
+ * @param o Config properties (copied to this instance).
  */
 JSD.TemplateDriven = function(o) {
     var jsd = new JSD(o);
@@ -198,16 +315,19 @@ JSD.TemplateDriven.prototype.print = function(s) {
     return new JST().run(this.template, { jsd: this });
 }
 
-/** @scope JSD */
+/**
+ * @namespace JSD.Modeler Modeler functions.
+ */
+JSD.Modeler = {
 
 /**
- * @function hierarchicalModeler
- * Modeler which popuplates "parent" tags
+ * @function parentChild
+ * Modeler which populates "parent" tags
  * with an array of their "children",
- * based on the childToParents conf setting.
+ * based on the {@link childToParents} conf setting.
  */
-JSD.hierarchicalModeler = function() {
-    var map = JSD.hierarchicalModeler.childToParents;
+parentChild: function() {
+    var map = JSD.Modeler.parentChild.childToParents;
     if (!map) return;
 
     for (var i = 0, tag, tags = this.tags; tag = tags[i]; i++) {
@@ -223,30 +343,29 @@ JSD.hierarchicalModeler = function() {
                 }
             }
     }
-}
+},
 
 /**
- * @function topLevelModeler
+ * @function topLevel
  * Modeler which populates arrays of top-level tags
- * in the main jsd object,
- * based on the topLevelTags conf setting.
+ * based on the {@link topLevelTags} conf setting.
  */
-JSD.topLevelModeler = function() {
-    var list = JSD.topLevelModeler.topLevelTags;
+topLevel: function() {
+    var list = JSD.Modeler.topLevel.topLevelTags;
     if (!list) return;
 
     for (var i = 0, tag, tags = this.tags; tag = tags[i]; i++)
         if (list.indexOf(tag.name) != -1)
             Utl.addToArrayProperty(this, tag.name, tag, true);
-}
+},
 
 /**
- * @function synonymModeler
+ * @function synonym
  * Modeler which replaces tag names with their synonyms,
- * based on the tagToReplacement conf setting.
+ * based on the {@link tagToReplacement} conf setting.
  */
-JSD.synonymModeler = function() {
-    var map = JSD.synonymModeler.tagToReplacement;
+synonym: function() {
+    var map = JSD.Modeler.synonym.tagToReplacement;
     if (!map) return;
 
     for (var i = 0, tag, tags = this.tags; tag = tags[i]; i++) {
@@ -255,14 +374,14 @@ JSD.synonymModeler = function() {
         if (typeof replacement == "string")
             tag.name = replacement;
     }
-}
+},
 
 /**
- * @function endNamespaceModeler
+ * @function endNamespace
  * Modeler which clears out any extra "end" tag data
  * (so as to make it work like a global "scope" tag).
  */
-JSD.endNamespaceModeler = function() {
+endNamespace: function() {
     if (!this.ends) return;
 
     for (var i = 0, tag, tags = this.ends; tag = tags[i]; i++) {
@@ -270,10 +389,18 @@ JSD.endNamespaceModeler = function() {
         tag.text = "";
         tag.modifiers = [];
     }
-}
+},
 
-JSD.nsModeler = function() {
-    var names = JSD.nsModeler.namespaceTags;
+/**
+ * @function nsMap
+ * Modeler which creates a map of fully qualified names
+ * to their corresponding {@link JSD.Tag} objects
+ * based on the {@link namespaceTags} conf setting.
+ * This map is stored as the <code>ns.map</code> property
+ * of the JSD instance.
+ */
+nsMap: function() {
+    var names = JSD.Modeler.nsMap.namespaceTags;
     if (!names) return;
 
     var nameslength = names.length;
@@ -336,7 +463,7 @@ JSD.nsModeler = function() {
                     if (inTags.indexOf(remapped.merged) == -1) {
                         inTags.push(remapped.merged);
                         tags[i] = remapped.merged;
-                    // remove other originials
+                    // remove other originals
                     } else {
                         tags.splice(i--, 1);
                     }
@@ -355,9 +482,15 @@ JSD.nsModeler = function() {
     this.ns = {
         map: map
     };
-}
+},
 
-JSD.nsModeler.sortedModeler = function(jsd) {
+/**
+ * @function nsSorted
+ * Modeler which creates a sorted array of {@link JSD.Tag} objects.
+ * This array is stored as the <code>ns.sorted</code> property
+ * of the JSD instance.
+ */
+nsSorted: function() {
     var map = this.ns.map;
 
     // create list of all namespaces
@@ -366,9 +499,16 @@ JSD.nsModeler.sortedModeler = function(jsd) {
         list.push(map[i]);
         
     this.ns.sorted = JSD.Tag.sortByValue(list);
-}
+},
 
-JSD.nsModeler.topModeler = function() {
+/**
+ * @function nsTop
+ * Modeler which creates a sorted array of {@link JSD.Tag} objects
+ * for the top-level namespaces.
+ * This array is stored as the <code>ns.top</code> property
+ * of the JSD instance.
+ */
+nsTop: function() {
     var map = this.ns.map;
 
     // create list of top-level namespaces
@@ -380,11 +520,20 @@ JSD.nsModeler.topModeler = function() {
     }
         
     this.ns.top = JSD.Tag.sortByValue(list);
-}
+},
 
-JSD.nsModeler.containersModeler = function(jsd) {
+/**
+ * @function nsContainers
+ * Modeler which creates a sorted array of {@link JSD.Tag} objects
+ * for the container namespaces.
+ * This array is stored as the <code>ns.containers</code> property
+ * of the JSD instance.
+ * <p>This modeler also adds a <code>ns.isContainer</code> function,
+ * which returns true if the specified namespace is a container.
+ */
+nsContainers: function() {
     var map = this.ns.map;
-    var names = JSD.nsModeler.namespaceTags;
+    var names = JSD.Modeler.nsMap.namespaceTags;
 
     // create list of namespaces with child namespaces
     var list = [];
@@ -400,31 +549,16 @@ JSD.nsModeler.containersModeler = function(jsd) {
     }
         
     this.ns.containers = JSD.Tag.sortByValue(list);
-    this.ns.isContainer = JSD.nsModeler.isContainer;
-}
-
-JSD.nsModeler.isContainer = function(name) {
-    if (!name) return false;
-
-    // if passed tag
-    if (name.name)
-        return this.containers.indexOf(name) != -1;
-
-    // if passed name
-    for (var i = 0, tag; tag = this.containers[i]; i++)
-        if (tag.value == name)
-            return true;
-
-    return false;
-}
+    this.ns.isContainer = JSD.Modeler.nsContainers.isContainer;
+},
 
 /**
- * @function disjointNamespacesModeler
+ * @function nsDisjoint
  * Modeler which connects parents to children based on namespaces
  * (ex adds Foo.Bar as child of Foo).
  */
-JSD.nsModeler.disjointModeler = function() {
-    var names = JSD.nsModeler.namespaceTags;
+nsDisjoint: function() {
+    var names = JSD.Modeler.nsMap.namespaceTags;
     if (!names) return;
 
     var tags = this.tags;
@@ -450,12 +584,21 @@ JSD.nsModeler.disjointModeler = function() {
             parent[plural] = [tag];
         }
     }
-}
+},
 
-JSD.nsModeler.globalsModeler = function() {
+/**
+ * @function nsGlobals
+ * Modeler which creates a "globals" {@link JSD.Tag}
+ * for top-level tags which aren't containers
+ * based on the {@link globalsTag} conf setting.
+ * This tag is stored as the <code>ns.globals</code> property
+ * of the JSD instance (and is treated as a regular
+ * top-level tag called <code>globals</code> if it's not empty).
+ */
+nsGlobals: function() {
     var top = this.ns.top;
     var containers = this.ns.containers;
-    var globals = this.ns.globals = JSD.nsModeler.globalsModeler.tag;
+    var globals = this.ns.globals = JSD.Modeler.nsGlobals.globalsTag;
 
     // allow output to skip globals if empty
     globals.empty = true;
@@ -480,21 +623,80 @@ JSD.nsModeler.globalsModeler = function() {
         containers.unshift(globals);
         this.ns.map[globals.value] = globals;
     }
-}
+},
 
 /**
- * @function projectModeler
+ * @function project
  * Modeler which merges multiple project declarations
- * and the default project ({@link JSD.defaultProject})
- * into the <code>project</code> property of the main jsd object.
+ * and the {@link projectTag} conf setting.
+ * into the <code>project</code> property of the JSD instance.
  */
-JSD.projectModeler = function() {
-    this.project = Utl.merge((this.projects || []).concat(JSD.projectModeler.tag));
-}
+project: function() {
+    this.project = Utl.merge((this.projects || []).concat(JSD.Modeler.project.projectTag));
+},
 
-// object hierarchy
-JSD.ohModeler = function() {
-    var relations = JSD.ohModeler.relations;
+/**
+ * @function objectHierarchy
+ * Modeler which constructs an object-hierarchy graph
+ * based on the {@link relations} conf setting.
+ * This graph is stored as the <code>oh.graph</code> property
+ * of the JSD instance, where the properties of this
+ * <code>oh.graph</code> property are all the namespaces
+ * found by the {@link nsMap} modeler; and the corresponding
+ * values are <code>sup</code> (super) and <code>sub</code>
+ * maps which each have references to the other values
+ * of <code>oh.graph</code> which are related to the namespace.
+ * <p>For example, say we have five namespaces:
+ * <code>Foo</code>, <code>Bar</code>, <code>Baz</code>,
+ * <code>Alfonzo</code>, and <code>Gatsby</code>.
+ * <code>Bar</code> extends <code>Foo</code>;
+ * <code>Baz</code> extends <code>Bar</code> and <code>Alfonzo</code>.
+ * The <code>oh.graph</code> object would look like the following:
+ * <pre><code>
+oh.graph: {
+    <i>// Foo extended by Bar</i>
+    Foo: {
+        sup: {},
+        sub: {
+            Bar: &lt;Bar object below&gt;
+        }
+    },
+    <i>// Bar extends Foo</i>
+    <i>// Bar extended by Baz</i>
+    Bar: {
+        sup: {
+            Foo: &lt;Foo object above&gt;
+        },
+        sub {
+            Baz: &lt;Baz object below&gt;
+        }
+    },
+    <i>// Baz extends Bar</i>
+    <i>// Baz extends Alfonzo</i>
+    Baz: {
+        sup: {
+            Bar: &lt;Bar object above&gt;,
+            Alfonzo: &lt;Alfonzo object below&gt;
+        },
+        sub: {}
+    },
+    <i>// Alfonzo extended by Baz</i>
+    Alfonzo: {
+        sup: {},
+        sub: {
+            Baz: &lt;Baz object above&gt;
+        }
+    },
+    <i>// Gatsby is unrelated to others</i>
+    Gatsby: {
+        sup: {},
+        sub: {}
+    }
+}
+ * </code></pre>
+ */
+objectHierarchy: function() {
+    var relations = JSD.Modeler.objectHierarchy.relations;
     if (!relations) return;
 
     var map = this.ns.map;
@@ -560,14 +762,14 @@ JSD.ohModeler = function() {
     this.oh = {
         graph: graph
     };
-}
+},
 
 /**
- * @function emptyFileModeler
+ * @function emptyFile
  * Modeler which removes empty file tags
  * (files tags with no other tags inside).
  */
-JSD.emptyFileModeler = function() {
+emptyFile: function() {
     var count = 1; // don't automatically remove first tag
     for (var i = 0, tag, tags = this.tags; tag = tags[i]; i++)
         if (tag.name == "file") {
@@ -577,13 +779,13 @@ JSD.emptyFileModeler = function() {
         } else {
             count++;
         }
-}
+},
 
 /**
- * @function nameModeler
+ * @function name
  * Modeler which replaces parent's value with value of "name" tag.
  */
-JSD.nameModeler = function() {
+name: function() {
     for (var i = 0, tag, tags = this.tags; tag = tags[i]; i++) {
         var names = tag.names;
         if (!names || !names[0]) continue;
@@ -594,13 +796,13 @@ JSD.nameModeler = function() {
         // remove name tags
         delete tag.names;
     }
-}
+},
 
 /**
- * @function descriptionModeler
+ * @function description
  * Modeler which inserts "description" tag into parent tag's "text" property.
  */
-JSD.descriptionModeler = function() {
+description: function() {
     for (var i = 0, tag, tags = this.tags; tag = tags[i]; i++) {
         var descriptions = tag.descriptions;
         if (!descriptions) continue;
@@ -612,5 +814,33 @@ JSD.descriptionModeler = function() {
         // remove description tags
         delete tag.descriptions;
     }
+}
+
+} /** @end JSD.Modeler */
+
+/**
+ * @function {boolean} JSD.Modeler.nsContainers.isContainer
+ * Returns true if the specified namespace is a container.
+ * This function is meant to be applied to the <code>ns</code> property
+ * of a {@link JSD} instance.
+ * @paramset name
+ * @param {string} name Namespace.
+ * @paramset tag
+ * @param {JSD.Tag} tag Tag.
+ * @return True if the specified namespace is a container.
+ */
+JSD.Modeler.nsContainers.isContainer = function(name) {
+    if (!name) return false;
+
+    // if passed tag
+    if (name.name)
+        return this.containers.indexOf(name) != -1;
+
+    // if passed name
+    for (var i = 0, tag; tag = this.containers[i]; i++)
+        if (tag.value == name)
+            return true;
+
+    return false;
 }
 
