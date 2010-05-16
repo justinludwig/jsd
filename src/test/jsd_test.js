@@ -74,15 +74,15 @@ function testReplaceLinks() {
 
     var jsd = new JSD();
     jsd.ns = {
-        isContainer: JSD.nsModeler.isContainer,
+        isContainer: JSD.Modeler.nsContainers.isContainer,
         containers: [ foo, bar ],
         map: {}
     };
     for (var i = 0, ns, nss = [ foo, foo2, bar, bar2, baz, baz2 ]; ns = nss[i]; i++)
         jsd.ns.map[ns.value] = ns;
 
-    var oldNamespaceTags = JSD.nsModeler.namespaceTags;
-    JSD.nsModeler.namespaceTags = [ "class" ];
+    var oldNamespaceTags = JSD.Modeler.nsMap.namespaceTags;
+    JSD.Modeler.nsMap.namespaceTags = [ "class" ];
 
     Utl.assertEquals("", jsd.urlTo(), "test url to null");
     Utl.assertEquals("", jsd.urlTo(""), "test url to empty");
@@ -127,7 +127,7 @@ function testReplaceLinks() {
         jsd.replaceLinks("My {@link Foo} for {@link Bar}."),
     "test replace links");
 
-    JSD.nsModeler.namespaceTags = oldNamespaceTags;
+    JSD.Modeler.nsMap.namespaceTags = oldNamespaceTags;
 }
 TestParse.add("testReplaceLinks", testReplaceLinks);
 
@@ -146,15 +146,15 @@ function testHierarchicalModeler() {
         new JSD.Tag("param", "ex"),
         new JSD.Tag("param", "ey")
     ] };
-    var oldChildToParents = JSD.hierarchicalModeler.childToParents;
-    JSD.hierarchicalModeler.childToParents = {
+    var oldChildToParents = JSD.Modeler.parentChild.childToParents;
+    JSD.Modeler.parentChild.childToParents = {
         "function": ["class"],
         property: ["class"],
         event: ["class"],
         param: ["function", "event"]
     };
-    JSD.hierarchicalModeler.call(jsd, jsd);
-    JSD.hierarchicalModeler.childToParents = oldChildToParents;
+    JSD.Modeler.parentChild.call(jsd, jsd);
+    JSD.Modeler.parentChild.childToParents = oldChildToParents;
 
     Utl.assert(jsd.tags[0].functions, "test hierarchical modeler Foo functions");
     Utl.assertEquals(1, jsd.tags[0].functions.length, "test hierarchical modeler functions length");
@@ -181,4 +181,4 @@ function testHierarchicalModeler() {
     Utl.assertEquals("ex", jsd.tags[9].params[0].value, "test hierarchical modeler Bar.e.ex");
     Utl.assertEquals("ey", jsd.tags[9].params[1].value, "test hierarchical modeler Bar.e.ey");
 }
-TestModel.add("testHierarchicalModeler", testHierarchicalModeler);
+TestModel.add("testParentChildModeler", testParentChildModeler);
